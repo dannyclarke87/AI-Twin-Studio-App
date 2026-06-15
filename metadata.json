@@ -1,0 +1,6 @@
+{
+  "name": "AI Twin Studio",
+  "description": "Auth-first premium SaaS library for AI tools built with a dark slate and neon green aesthetic.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

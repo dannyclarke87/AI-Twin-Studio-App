@@ -1,0 +1,76 @@
+import { AppItem } from './types';
+
+export const mockApps: AppItem[] = [
+  {
+    id: 'podcast_studio',
+    title: 'Podcast Studio',
+    description: 'Create a podcast talking head video',
+    category: 'Video',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69958998905d478293958731.png',
+    link: 'https://ai.studio/apps/84ea5f98-73d8-418e-9ef7-3abfc65a5b40',
+  },
+  {
+    id: 'campaign_builder',
+    title: 'Campaign Builder',
+    description: 'Create 8 images for a brand shoot',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f7590acb6afdb04d00.png',
+    link: 'https://ai.studio/apps/c0c7ceda-c3f1-48ba-a3ea-b6d2cca28a50',
+  },
+  {
+    id: 'pet_studio',
+    title: 'Pet Studio',
+    description: 'Create an image of your furry friend',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f7590acb9b33b04cff.jpg',
+    link: 'https://ai.studio/apps/03edcb3d-14e3-46e2-900a-a3fc68c32c4d',
+  },
+  {
+    id: 'baddie_studio',
+    title: 'Baddie Studio',
+    description: 'Create an image of your alter ego',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c3751679b489b87266fa4.jpg',
+    link: 'https://ai.studio/apps/1870c70c-aadc-41a5-aa45-3336cc3361af',
+  },
+  {
+    id: 'meme_studio',
+    title: 'Meme Studio',
+    description: 'Create a meme image to bring the chaos',
+    category: 'Memes',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f75dfd505b326f6716.jpg',
+    link: 'https://ai.studio/apps/3cdb4d10-5fd7-46ec-b5b1-00f98a3af865',
+  },
+  {
+    id: 'family_studio',
+    title: 'Family Studio',
+    description: 'Create an image of your family',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fcd0716b7f2c29e1b2.jpg',
+    link: 'https://ai.studio/apps/631ddb70-f095-4b9a-98c8-3f9f7bb5fde1',
+  },
+  {
+    id: 'duo_studio',
+    title: 'Duo Studio',
+    description: 'Create an image of two people together',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fc5dfd50310d6f6842.jpg',
+    link: 'https://ai.studio/apps/57b916da-af81-46ab-9fed-69094cfcb560',
+  },
+  {
+    id: 'vsl_b_roll_studio',
+    title: 'VSL B-Roll Studio',
+    description: 'Create b-roll for your VSL',
+    category: 'Video',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69c270774eeb9a5244bde16c.gif',
+    link: 'https://ai.studio/apps/36dcdc2d-d163-45ae-baeb-d9cec9b9a574',
+  },
+  {
+    id: 'talking_head_studio',
+    title: 'Talking Head Studio',
+    description: 'Create a talking head video',
+    category: 'Video',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3018101b95dbb2c2f1bff3.png',
+    link: 'https://ai.studio/apps/32006d63-ca18-4911-83d0-cd2c2871b9bc',
+  }
+];

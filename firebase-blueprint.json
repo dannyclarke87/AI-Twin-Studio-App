@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with their subscription/admin status",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["unpaid", "paid", "admin"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile stored at their Auth UID"
+    }
+  }
+}

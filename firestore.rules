@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'danny@easypeasybusiness.com' ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'admin'
+        )
+      );
+    }
+
+    function isValidUser(data) {
+      let isCreate = request.method == 'create';
+      let hasKeys = isCreate ? data.keys().hasAll(['email', 'status', 'createdAt']) && data.keys().size() <= 4 : true;
+      let validEmail = data.email is string && data.email.size() <= 300;
+      let validStatus = data.status in ['unpaid', 'paid', 'admin'];
+      return hasKeys && validEmail && validStatus;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      // Admin can list all. Users can only list if they filter by their own email securely
+      allow list: if isAdmin() || (isSignedIn() && resource.data.email == request.auth.token.email);
+      
+      allow create: if isValidId(userId)
+                    && isOwner(userId)
+                    && isValidUser(incoming())
+                    && incoming().email == request.auth.token.email
+                    && (request.auth.token.email == 'danny@easypeasybusiness.com' ? incoming().status == 'admin' : incoming().status == 'unpaid');
+                    
+      allow update: if isValidId(userId)
+                    && isValidUser(incoming())
+                    && incoming().email == existing().email // immutable email
+                    && (
+                      (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+                      (isOwner(userId) && !isAdmin() && existing().status == 'unpaid' && incoming().status == 'paid' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+                    );
+
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+  }
+}
