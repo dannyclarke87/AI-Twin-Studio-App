@@ -63,6 +63,38 @@ async function startServer() {
                 updatedAt: FieldValue.serverTimestamp(),
               });
               console.log(`Successfully updated user ${userId} to paid via webhook`);
+
+              const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
+              if (ghlWebhookUrl) {
+                try {
+                  const payload = {
+                    event: "payment_success",
+                    product: "AI Twin Studio",
+                    user: {
+                      uid: userId,
+                      email: session.customer_details?.email || "",
+                      name: session.customer_details?.name || "",
+                      role: "user"
+                    }
+                  };
+                  console.log("Triggering GHL webhook with payload:", payload);
+                  
+                  const ghlRes = await fetch(ghlWebhookUrl, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                  });
+                  if (!ghlRes.ok) {
+                    console.error("Failed to trigger GHL webhook:", await ghlRes.text());
+                  } else {
+                    console.log("Successfully triggered GHL inbound webhook");
+                  }
+                } catch (ghlErr) {
+                  console.error("Error connecting to GHL webhook:", ghlErr);
+                }
+              }
             } else {
               console.warn("Firebase Admin not initialized, cannot update user from webhook.");
             }
@@ -92,7 +124,8 @@ async function startServer() {
 
     try {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-      const appUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+      const originUrl = req.get('origin') || req.get('referer')?.replace(/\/$/, "");
+      const appUrl = process.env.APP_URL || originUrl || `http://localhost:${PORT}`;
 
       const { userId } = req.body;
 
