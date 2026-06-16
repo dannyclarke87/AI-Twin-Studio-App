@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { handleFirestoreError, OperationType } from './utils/firebaseErrors';
 import { AuthState, User } from './types';
@@ -60,6 +60,21 @@ export default function App() {
               status: currentUserStatus,
               createdAt: serverTimestamp(),
             });
+            
+            // Trigger GHL webhook for new registrations
+            try {
+              await fetch('/api/user-registered', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                   email: firebaseUser.email,
+                   uid: firebaseUser.uid,
+                   status: currentUserStatus
+                 })
+              });
+            } catch (err) {
+              console.error('Failed to trigger registration webhook', err);
+            }
             
             if (hasLegacyData) {
               try {

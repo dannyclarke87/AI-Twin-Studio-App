@@ -117,6 +117,41 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  app.post("/api/user-registered", async (req, res) => {
+    const { email, uid, status } = req.body;
+    
+    const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
+    if (ghlWebhookUrl) {
+      try {
+        const payload = {
+          event: "user_registered",
+          product: "AI Twin Studio",
+          user: {
+            uid,
+            email,
+            status,
+            role: "user"
+          }
+        };
+        console.log("Triggering GHL webhook for registration:", payload);
+        
+        const ghlRes = await fetch(ghlWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!ghlRes.ok) {
+          console.error("Failed to trigger GHL webhook for registration:", await ghlRes.text());
+        } else {
+          console.log("Successfully triggered GHL registration webhook");
+        }
+      } catch (ghlErr) {
+        console.error("Error connecting to GHL webhook:", ghlErr);
+      }
+    }
+    res.json({ success: true });
+  });
+
   app.post("/api/create-checkout-session", async (req, res) => {
     if (!process.env.STRIPE_SECRET_KEY) {
       return res.status(500).json({ error: "STRIPE_SECRET_KEY is not configured on the server." });
