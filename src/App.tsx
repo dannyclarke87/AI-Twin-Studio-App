@@ -31,9 +31,9 @@ export default function App() {
         const userRef = doc(db, 'users', firebaseUser.uid);
         
         // Check if user exists first
+        let currentUserStatus: AuthState = 'unpaid';
         try {
           const userSnap = await getDoc(userRef);
-          let currentUserStatus: AuthState = 'unpaid';
 
           if (!userSnap.exists()) {
             const isDefaultAdmin = firebaseUser.email === 'danny@easypeasybusiness.com';
@@ -100,7 +100,14 @@ export default function App() {
             }
           }
         } catch (err) {
-          handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`);
+          try {
+            handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`);
+          } catch (e) {
+            console.error("Firestore error handled:", e);
+          }
+        } finally {
+          setAuthState(currentUserStatus);
+          setLoading(false);
         }
 
         // Setup real-time listener for status changes
@@ -110,10 +117,13 @@ export default function App() {
                 setAuthState(data.status);
             }
         }, (error) => {
-            handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+            try {
+              handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+            } catch (e) {
+              console.error("Firestore onSnapshot error handled:", e);
+            }
         });
 
-        setLoading(false);
         return () => unsubscribeSnapshot();
       } else {
         setCurrentUserEmail(null);
