@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, doc, deleteDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc, onSnapshot, serverTimestamp, setDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrors';
 import { User } from '../types';
-import { LogOut, Trash2, Edit2, Check, X, LayoutGrid } from 'lucide-react';
+import { LogOut, Trash2, Edit2, Check, X, LayoutGrid, Plus } from 'lucide-react';
 
 interface AdminScreenProps {
   onLogout: () => void;
@@ -13,7 +13,7 @@ interface AdminScreenProps {
 export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStatus, setEditStatus] = useState<'unpaid' | 'paid' | 'admin'>('unpaid');
+  const [editStatus, setEditStatus] = useState<'unpaid' | 'paid' | 'admin' | 'legacy'>('unpaid');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,10 +36,17 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
     return () => unsub();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserStatus, setNewUserStatus] = useState<'unpaid' | 'paid' | 'admin' | 'legacy'>('paid');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const confirmDelete = async (id: string) => {
     try {
         await deleteDoc(doc(db, 'users', id));
+        setDeletingId(null);
     } catch (err) {
         handleFirestoreError(err, OperationType.DELETE, `users/${id}`);
     }
@@ -64,6 +71,45 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
 
   const cancelEdit = () => {
     setEditingId(null);
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserEmail.trim()) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const emailLower = newUserEmail.toLowerCase().trim();
+      
+      // Check if user already exists
+      const q = query(collection(db, 'users'), where('email', '==', emailLower));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        // User exists, just update their status
+        const existingDoc = querySnapshot.docs[0];
+        await updateDoc(doc(db, 'users', existingDoc.id), {
+          status: newUserStatus,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        // User doesn't exist, create an email-based entry
+        await setDoc(doc(db, 'users', emailLower), {
+          email: emailLower,
+          status: newUserStatus,
+          createdAt: serverTimestamp()
+        });
+      }
+      
+      setIsAddingUser(false);
+      setNewUserEmail('');
+      setNewUserStatus('paid');
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || 'Failed to add user. Check console for details.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -97,6 +143,59 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
           {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-4 text-sm">{error}</div>}
+          
+          <div className="mb-6 flex justify-between items-center bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-sm">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-100">Registered Users</h2>
+              <p className="text-sm text-zinc-400">Total: {users.length}</p>
+            </div>
+            
+            {!isAddingUser ? (
+              <button
+                onClick={() => setIsAddingUser(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#dcfb80] text-zinc-900 rounded-md font-semibold text-sm hover:bg-[#cbe870] transition-colors"
+              >
+                <Plus size={16} />
+                <span>Add User</span>
+              </button>
+            ) : (
+              <form onSubmit={handleAddUser} className="flex items-center gap-3">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  required
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="bg-zinc-950 border border-zinc-700 text-zinc-100 text-sm rounded-md px-3 py-2 w-64 focus:outline-none focus:border-[#dcfb80]"
+                />
+                <select
+                  value={newUserStatus}
+                  onChange={(e) => setNewUserStatus(e.target.value as any)}
+                  className="bg-zinc-950 border border-zinc-700 text-zinc-100 text-sm rounded-md px-3 py-2 focus:outline-none focus:border-[#dcfb80]"
+                >
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="legacy">Legacy</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-[#dcfb80] text-zinc-900 rounded-md font-semibold text-sm hover:bg-[#cbe870] transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Adding...' : 'Add'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingUser(false)}
+                  className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </div>
+
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm whitespace-nowrap">
@@ -130,11 +229,13 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
                             >
                               <option value="unpaid">Unpaid</option>
                               <option value="paid">Paid</option>
+                              <option value="legacy">Legacy</option>
                               <option value="admin">Admin</option>
                             </select>
                           ) : (
                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide
                               ${user.status === 'paid' ? 'bg-[#dcfb80]/10 text-[#dcfb80] border border-[#dcfb80]/20' : 
+                                user.status === 'legacy' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                                 user.status === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                                 'bg-red-500/10 text-red-400 border border-red-500/20'}
                             `}>
@@ -146,7 +247,17 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
                           {new Date(user.createdAt).toLocaleDateString()} {new Date(user.createdAt).toLocaleTimeString()}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {editingId === user.id ? (
+                          {deletingId === user.id ? (
+                            <div className="flex justify-end gap-2 items-center">
+                              <span className="text-xs text-red-400 font-medium">Delete?</span>
+                              <button onClick={() => confirmDelete(user.id)} className="p-1.5 text-red-400 hover:bg-red-400/10 rounded transition-colors" title="Confirm Delete">
+                                <Check size={18} />
+                              </button>
+                              <button onClick={() => setDeletingId(null)} className="p-1.5 text-zinc-400 hover:bg-zinc-700 rounded transition-colors" title="Cancel">
+                                <X size={18} />
+                              </button>
+                            </div>
+                          ) : editingId === user.id ? (
                             <div className="flex justify-end gap-2">
                               <button onClick={() => saveEdit(user.id)} className="p-1.5 text-green-400 hover:bg-green-400/10 rounded transition-colors" title="Save">
                                 <Check size={18} />
@@ -160,7 +271,7 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
                               <button onClick={() => startEdit(user)} className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded transition-colors" title="Edit Status">
                                 <Edit2 size={18} />
                               </button>
-                              <button onClick={() => handleDelete(user.id)} className="p-1.5 text-zinc-400 hover:text-[#ff6b6b] hover:bg-red-500/10 rounded transition-colors" title="Delete User">
+                              <button onClick={() => setDeletingId(user.id)} className="p-1.5 text-zinc-400 hover:text-[#ff6b6b] hover:bg-red-500/10 rounded transition-colors" title="Delete User">
                                 <Trash2 size={18} />
                               </button>
                             </div>

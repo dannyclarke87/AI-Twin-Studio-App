@@ -10,7 +10,7 @@ interface DashboardScreenProps {
   onOpenAdmin?: () => void;
 }
 
-const CATEGORIES: Category[] = ['All', 'Video', 'Images', 'LinkedIn', 'Memes'];
+const CATEGORIES: Category[] = ['All', 'Video', 'Images', 'LinkedIn', 'Memes', 'Voice', 'Text'];
 
 export function DashboardScreen({ onLogout, onOpenSettings, isAdmin, onOpenAdmin }: DashboardScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,7 +46,13 @@ export function DashboardScreen({ onLogout, onOpenSettings, isAdmin, onOpenAdmin
     // 1. Sidebar Filter
     if (sidebarFilter === 'Favorites' && !favorites.includes(app.id)) return false;
     // 2. Category Pill Filter
-    if (activeCategory !== 'All' && app.category !== activeCategory) return false;
+    if (activeCategory !== 'All') {
+      if (Array.isArray(app.category)) {
+        if (!app.category.includes(activeCategory as Exclude<Category, 'All'>)) return false;
+      } else {
+        if (app.category !== activeCategory) return false;
+      }
+    }
     // 3. Search text
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();

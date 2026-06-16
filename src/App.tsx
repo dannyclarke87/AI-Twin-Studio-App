@@ -33,17 +33,71 @@ export default function App() {
         // Check if user exists first
         try {
           const userSnap = await getDoc(userRef);
+          let currentUserStatus: AuthState = 'unpaid';
+
           if (!userSnap.exists()) {
             const isDefaultAdmin = firebaseUser.email === 'danny@easypeasybusiness.com';
+            
+            // Check if user was pre-added by email and migrate them
+            const emailDocRef = doc(db, 'users', firebaseUser.email.toLowerCase());
+            let statusToSet: AuthState = isDefaultAdmin ? 'admin' : 'unpaid';
+            
+            let hasLegacyData = false;
+            try {
+              const emailDocSnap = await getDoc(emailDocRef);
+              if (emailDocSnap.exists()) {
+                const legacyData = emailDocSnap.data() as User;
+                statusToSet = legacyData.status;
+                hasLegacyData = true;
+              }
+            } catch (e) {
+              console.error('Failed to check pre-approved user:', e);
+            }
+            
+            currentUserStatus = statusToSet;
             await setDoc(userRef, {
               email: firebaseUser.email,
-              status: isDefaultAdmin ? 'admin' : 'unpaid',
+              status: currentUserStatus,
               createdAt: serverTimestamp(),
             });
-            setAuthState(isDefaultAdmin ? 'admin' : 'unpaid');
+            
+            if (hasLegacyData) {
+              try {
+                await deleteDoc(emailDocRef);
+              } catch (e) {
+                console.error('Failed to delete legacy email doc', e);
+              }
+            }
+            setAuthState(currentUserStatus);
           } else {
             const userData = userSnap.data() as User;
-            setAuthState(userData.status);
+            currentUserStatus = userData.status;
+            setAuthState(currentUserStatus);
+          }
+
+          // Handle successful Stripe payment redirect
+          const urlParams = new URLSearchParams(window.location.search);
+          const sessionId = urlParams.get('session_id');
+          if (sessionId && currentUserStatus === 'unpaid') {
+            try {
+              const res = await fetch('/api/verify-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId })
+              });
+              const data = await res.json();
+              if (data.success && data.userId === firebaseUser.uid) {
+                 await updateDoc(userRef, {
+                    status: 'paid',
+                    updatedAt: serverTimestamp()
+                 });
+                 setAuthState('paid');
+                 // Remove session_id from URL to prevent re-verifying
+                 window.history.replaceState({}, document.title, window.location.pathname);
+              }
+            } catch (err) {
+              console.error('Failed to verify session', err);
+            }
           }
         } catch (err) {
           handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`);
@@ -78,13 +132,24 @@ export default function App() {
   const handleUpgrade = async () => {
     if (auth.currentUser) {
         try {
-            const userRef = doc(db, 'users', auth.currentUser.uid);
-            await updateDoc(userRef, {
-                status: 'paid',
-                updatedAt: serverTimestamp()
+            const res = await fetch('/api/create-checkout-session', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ userId: auth.currentUser.uid })
             });
+
+            if (!res.ok) {
+               const errData = await res.json();
+               throw new Error(errData.error || 'Failed to create checkout session');
+            }
+
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            }
         } catch (err) {
-           handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
+            console.error("Upgrade error:", err);
+            alert("Payment setup is incomplete. Ensure STRIPE_SECRET_KEY is set in your environment.");
         }
     }
   };
@@ -107,7 +172,7 @@ export default function App() {
         <PaywallScreen onUpgrade={handleUpgrade} onLogout={handleLogout} />
       )}
       
-      {(authState === 'paid' || (authState === 'admin' && viewState === 'dashboard')) && (
+      {(authState === 'paid' || authState === 'legacy' || (authState === 'admin' && viewState === 'dashboard')) && (
         <DashboardScreen 
           onLogout={handleLogout} 
           onOpenSettings={() => setIsSettingsOpen(true)}
