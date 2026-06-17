@@ -92,7 +92,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
               "Podcast Studio",
               "Campaign Builder",
               "Talking Head Studio",
-              "Whiteboard Dashboard",
+              "Whiteboard Studio",
               "Headshot Studio",
               "AI Upscaler & Wall Text",
               "Pet, Family & Duo Studios",

@@ -20,7 +20,13 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
         onLogin(result.user.email.toLowerCase().trim());
       }
     } catch (err: any) {
-      setError(err.message);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError("The Google sign-in window was closed before completion. Please try again or sign up with email and password.");
+      } else if (err.code === 'auth/popup-blocked') {
+        setError("The Google sign-in popup was blocked by your browser. Please allow popups or use email and password to log in.");
+      } else {
+        setError(err.message);
+      }
     }
   };
 

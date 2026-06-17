@@ -51,7 +51,18 @@ async function startServer() {
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
       if (!webhookSecret) {
+        console.error("[Stripe Webhook ERROR] Webhook secret not configured. Please set STRIPE_WEBHOOK_SECRET.");
         return res.status(400).send("Webhook secret not configured.");
+      }
+
+      if (webhookSecret.startsWith("http://") || webhookSecret.startsWith("https://") || !webhookSecret.startsWith("whsec_")) {
+        console.error("=========================================================================");
+        console.error("[CRITICAL CONFIG WARNING] STRIPE_WEBHOOK_SECRET seems MISCONFIGURED!");
+        console.error(`Current Value starts with: "${webhookSecret.substring(0, 10)}..."`);
+        console.error("Stripe Webhook Secrets must begin with 'whsec_'.");
+        console.error("It looks like you might have accidentally pasted your Webhook Endpoint URL");
+        console.error("instead of the Webhook Signing Secret Key from your Stripe Dashboard.");
+        console.error("=========================================================================");
       }
 
       if (!process.env.STRIPE_SECRET_KEY) {
@@ -96,16 +107,30 @@ async function startServer() {
               const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
               if (ghlWebhookUrl && lastProcessedSessionId !== session.id) {
                 try {
-                  const customerEmail = session.customer_details?.email || "";
-                  const customerName = session.customer_details?.name || "";
+                  let customerEmail = session.customer_details?.email || "";
+                  let customerName = session.customer_details?.name || "";
+                  
+                  if (userSnap.exists) {
+                    const data = userSnap.data();
+                    if (!customerEmail) customerEmail = data?.email || "";
+                    if (!customerName) customerName = data?.name || "";
+                  }
+
                   const nameParts = customerName ? customerName.trim().split(/\s+/) : [];
                   const firstName = nameParts[0] || "";
                   const lastName = nameParts.slice(1).join(" ") || "";
+                  const stripeProductName = `AI Twin Studio - ${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan`;
 
                   const payload = {
                     event: "payment_success",
                     product: `AI Twin Studio - ${tier.toUpperCase()}`,
+                    productName: tier === 'starter' ? 'AI Twin Studio - Starter Plan' : tier === 'pro' ? 'AI Twin Studio - Pro Plan' : 'AI Twin Studio - Elite Plan',
+                    stripeProductName: stripeProductName,
                     tier: tier,
+                    plan: tier,
+                    status: tier,
+                    tag: tier,
+                    tags: [tier],
                     email: customerEmail,
                     name: customerName,
                     firstName: firstName,
@@ -303,7 +328,9 @@ async function startServer() {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
       const { sessionId } = req.body;
 
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["line_items"]
+      });
 
       if (session.payment_status === "paid") {
         const userId = session.client_reference_id;
@@ -341,11 +368,18 @@ async function startServer() {
                 const nameParts = (userName || "").trim().split(/\s+/);
                 const firstName = nameParts[0] || "";
                 const lastName = nameParts.slice(1).join(" ") || "";
+                const stripeProductName = session.line_items?.data?.[0]?.description || "";
 
                 const payload = {
                   event: "payment_success",
                   product: `AI Twin Studio - ${tier.toUpperCase()}`,
+                  productName: tier === 'starter' ? 'AI Twin Studio - Starter Plan' : tier === 'pro' ? 'AI Twin Studio - Pro Plan' : 'AI Twin Studio - Elite Plan',
+                  stripeProductName: stripeProductName || `AI Twin Studio - ${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan`,
                   tier: tier,
+                  plan: tier,
+                  status: tier,
+                  tag: tier,
+                  tags: [tier],
                   email: userEmail,
                   name: userName,
                   firstName: firstName,
