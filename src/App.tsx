@@ -30,7 +30,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [viewState, setViewState] = useState<'dashboard' | 'admin' | 'getting_started'>('dashboard');
+  const [viewState, setViewState] = useState<'dashboard' | 'admin' | 'getting_started'>('getting_started');
 
   useEffect(() => {
     // Initialize First Promoter Tracking if account ID is set in the environment

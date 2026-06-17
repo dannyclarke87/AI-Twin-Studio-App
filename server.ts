@@ -42,9 +42,9 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Stripe Webhook MUST use raw body parser
+  // Stripe Webhook MUST use raw body parser (supports both endpoints for maximum compatibility)
   app.post(
-    "/api/webhook",
+    ["/api/webhook", "/api/stripe/webhook"],
     express.raw({ type: "application/json" }),
     async (req, res) => {
       const sig = req.headers["stripe-signature"];
@@ -177,7 +177,40 @@ async function startServer() {
 
   // API routes FIRST
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+    const isFirebase = getApps().length > 0;
+    
+    // Safely mask sensitive variables
+    const maskSecret = (key: string | undefined, prefix: string) => {
+      if (!key) return "MISSING";
+      if (!key.startsWith(prefix)) {
+        // Offer detailed guidance for misconfigured formats
+        if (key.startsWith("http")) return "INVALID_FORMAT_PASTED_URL_INSTEAD_OF_SECRET";
+        return `INVALID_PREFIX_EXPECTED_${prefix.toUpperCase()}`;
+      }
+      return `${prefix}...${key.slice(-4)}`;
+    };
+
+    const maskUrl = (url: string | undefined) => {
+      if (!url) return "MISSING";
+      try {
+        const u = new URL(url);
+        return `${u.protocol}//${u.host}/...`;
+      } catch (e) {
+        return "INVALID_URL";
+      }
+    };
+
+    res.json({
+      status: "ok",
+      diagnostics: {
+        firebaseAdminInitialized: isFirebase,
+        stripeSecretKey: maskSecret(process.env.STRIPE_SECRET_KEY, "sk_"),
+        stripeWebhookSecret: maskSecret(process.env.STRIPE_WEBHOOK_SECRET, "whsec_"),
+        ghlWebhookUrl: maskUrl(process.env.GHL_WEBHOOK_URL),
+        appUrl: process.env.APP_URL || "NOT_SET",
+        nodeEnv: process.env.NODE_ENV || "development"
+      }
+    });
   });
 
   app.post("/api/user-registered", async (req, res) => {
