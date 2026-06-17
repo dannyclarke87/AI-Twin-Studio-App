@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import Stripe from "stripe";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
@@ -18,6 +19,23 @@ if (!getApps().length) {
   } catch (error) {
     console.error("Failed to initialize Firebase Admin:", error);
   }
+}
+
+// Global helper to get custom db based on config or default
+function getFirestoreDb() {
+  try {
+    const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      if (config.firestoreDatabaseId) {
+        console.log("Using custom Firestore Database ID:", config.firestoreDatabaseId);
+        return getFirestore(config.firestoreDatabaseId);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to read firestoreDatabaseId from config; resorting to default", err);
+  }
+  return getFirestore();
 }
 
 async function startServer() {
@@ -58,7 +76,7 @@ async function startServer() {
         if (userId) {
           try {
             if (getApps().length > 0) {
-              const db = getFirestore();
+              const db = getFirestoreDb();
               const userRef = db.collection("users").doc(userId);
               const userSnap = await userRef.get();
               
@@ -181,7 +199,7 @@ async function startServer() {
       let currentStatus = "unpaid";
       if (userId && getApps().length > 0) {
         try {
-          const db = getFirestore();
+          const db = getFirestoreDb();
           const userSnap = await db.collection("users").doc(userId).get();
           if (userSnap.exists) {
             currentStatus = userSnap.data()?.status || "unpaid";
@@ -276,7 +294,7 @@ async function startServer() {
         const tier = session.metadata?.tier || "elite";
 
         if (userId && getApps().length > 0) {
-          const db = getFirestore();
+          const db = getFirestoreDb();
           const userRef = db.collection("users").doc(userId);
           const userSnap = await userRef.get();
           
