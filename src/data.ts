@@ -2,12 +2,31 @@ import { AppItem } from './types';
 
 export const mockApps: AppItem[] = [
   {
+    id: 'whiteboard_dashboard',
+    title: 'Whiteboard Dashboard',
+    description: 'Create image of a whiteboard message',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a31de218892600038ae7d9a.png',
+    link: 'https://ai.studio/apps/81f45cdd-5a54-4222-8743-5d92d7b02ba2',
+    level: 'pro',
+  },
+  {
+    id: 'studio_dashboard',
+    title: 'Studio Dashboard',
+    description: 'Use chat interface to create any image',
+    category: 'Images',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3243faad2dd4493c086f47.png',
+    link: 'https://ai.studio/apps/81f45cdd-5a54-4222-8743-5d92d7b02ba2',
+    level: 'pro',
+  },
+  {
     id: 'podcast_studio',
     title: 'Podcast Studio',
     description: 'Create a podcast talking head video',
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69958998905d478293958731.png',
     link: 'https://ai.studio/apps/84ea5f98-73d8-418e-9ef7-3abfc65a5b40',
+    level: 'pro',
   },
   {
     id: 'campaign_builder',
@@ -16,6 +35,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f7590acb6afdb04d00.png',
     link: 'https://ai.studio/apps/c0c7ceda-c3f1-48ba-a3ea-b6d2cca28a50',
+    level: 'pro',
   },
   {
     id: 'pet_studio',
@@ -24,6 +44,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f7590acb9b33b04cff.jpg',
     link: 'https://ai.studio/apps/03edcb3d-14e3-46e2-900a-a3fc68c32c4d',
+    level: 'pro',
   },
   {
     id: 'baddie_studio',
@@ -32,6 +53,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c3751679b489b87266fa4.jpg',
     link: 'https://ai.studio/apps/1870c70c-aadc-41a5-aa45-3336cc3361af',
+    level: 'starter',
   },
   {
     id: 'meme_studio',
@@ -40,6 +62,7 @@ export const mockApps: AppItem[] = [
     category: 'Memes',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f75dfd505b326f6716.jpg',
     link: 'https://ai.studio/apps/3cdb4d10-5fd7-46ec-b5b1-00f98a3af865',
+    level: 'starter',
   },
   {
     id: 'family_studio',
@@ -48,6 +71,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fcd0716b7f2c29e1b2.jpg',
     link: 'https://ai.studio/apps/631ddb70-f095-4b9a-98c8-3f9f7bb5fde1',
+    level: 'pro',
   },
   {
     id: 'duo_studio',
@@ -56,6 +80,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fc5dfd50310d6f6842.jpg',
     link: 'https://ai.studio/apps/57b916da-af81-46ab-9fed-69094cfcb560',
+    level: 'pro',
   },
   {
     id: 'vsl_b_roll_studio',
@@ -64,6 +89,7 @@ export const mockApps: AppItem[] = [
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69c270774eeb9a5244bde16c.gif',
     link: 'https://ai.studio/apps/36dcdc2d-d163-45ae-baeb-d9cec9b9a574',
+    level: 'elite',
   },
   {
     id: 'talking_head_studio',
@@ -72,6 +98,7 @@ export const mockApps: AppItem[] = [
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3018101b95dbb2c2f1bff3.png',
     link: 'https://ai.studio/apps/32006d63-ca18-4911-83d0-cd2c2871b9bc',
+    level: 'pro',
   },
   {
     id: 'headshot_studio',
@@ -80,6 +107,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3020a980d813e2ec9059e5.png',
     link: 'https://ai.studio/apps/667a57b9-fe13-4d12-9f47-d6b8b493547b',
+    level: 'pro',
   },
   {
     id: 'viral_fan_cam',
@@ -88,6 +116,7 @@ export const mockApps: AppItem[] = [
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3021e3e5b9322bdddfd7f1.png',
     link: 'https://ai.studio/apps/77bbb2d0-e5dd-4856-9ed9-7d3548b8c175',
+    level: 'pro',
   },
   {
     id: 'vlog_studio',
@@ -96,6 +125,7 @@ export const mockApps: AppItem[] = [
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fc9598d283eedbdf24.jpg',
     link: 'https://ai.studio/apps/5882bdc5-3f2e-4338-9e44-d5234d620501',
+    level: 'elite',
   },
   {
     id: 'pro_studio',
@@ -104,6 +134,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fcd0716b43f729e1b1.jpg',
     link: 'https://ai.studio/apps/8a6be630-57c5-4936-a319-46dc23701609',
+    level: 'starter',
   },
   {
     id: 'elevenlabs_enhancer',
@@ -112,6 +143,7 @@ export const mockApps: AppItem[] = [
     category: 'Voice',
     image: 'tbc',
     link: 'https://ai.studio/apps/0943b612-1e2c-470f-bc63-f8a6297c65af',
+    level: 'elite',
   },
   {
     id: 'prompt_library',
@@ -120,6 +152,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3027330a683b64fe525c5c.png',
     link: 'https://ai.studio/apps/78088679-8e38-4263-a99f-4a8dffccf529',
+    level: 'pro',
   },
   {
     id: 'ai_upscaler',
@@ -128,6 +161,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: ' ',
     link: 'https://ai.studio/apps/95c897d0-bc60-4ba0-bf85-0f47902998a8',
+    level: 'pro',
   },
   {
     id: 'wall_text_studio',
@@ -136,6 +170,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69e0ed4e83b092a6c7abd362.png',
     link: 'https://ai.studio/apps/d8230a5c-3539-4f54-9ba1-c0f5699ba07b',
+    level: 'pro',
   },
   {
     id: 'pov_video_studio',
@@ -144,6 +179,7 @@ export const mockApps: AppItem[] = [
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69dcdfdde34cc263fb5d4226.gif',
     link: 'https://ai.studio/apps/822e3cb9-ddf4-4f34-bf71-63b32ef10dd0',
+    level: 'elite',
   },
   {
     id: 'script_engine',
@@ -152,6 +188,7 @@ export const mockApps: AppItem[] = [
     category: 'Text',
     image: ' ',
     link: 'https://ai.studio/apps/f5576d1f-2023-4345-bc02-3f5f33dcb015',
+    level: 'elite',
   },
   {
     id: 'content_creator',
@@ -160,6 +197,7 @@ export const mockApps: AppItem[] = [
     category: 'Text',
     image: ' ',
     link: 'https://ai.studio/apps/9b709e43-58de-4ecd-9cbe-bb11aad879a1',
+    level: 'elite',
   },
   {
     id: 'affiliate_studio',
@@ -168,6 +206,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699493e93a96e56742127f5e.png',
     link: 'https://ai.studio/apps/db31b0cc-7222-47ee-901c-9a59591b5dc9',
+    level: 'elite',
   },
   {
     id: 'carousel_studio',
@@ -176,6 +215,7 @@ export const mockApps: AppItem[] = [
     category: ['Images', 'Text'],
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69c2a0e275ee051e0d5f2535.png',
     link: 'https://ai.studio/apps/07e2be67-f388-40b2-a54f-9d5b39ce7a34',
+    level: 'elite',
   },
   {
     id: 'text_images',
@@ -184,6 +224,7 @@ export const mockApps: AppItem[] = [
     category: ['Images', 'Text'],
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69c28626ad14000ad93c00ad.png',
     link: 'https://ai.studio/apps/dda8100d-b9ab-4768-95e3-4da6368b2694',
+    level: 'elite',
   },
   {
     id: 'thumbnail_studio',
@@ -192,6 +233,7 @@ export const mockApps: AppItem[] = [
     category: ['Images', 'Text'],
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36f7590acb7717b04cfe.png',
     link: 'https://ai.studio/apps/7ac3267a-ed17-4a73-9b7c-fd5eb2eb8745',
+    level: 'pro',
   },
   {
     id: 'ugc_studio',
@@ -200,6 +242,7 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69b7fbecc625852323c06090.png',
     link: 'https://ai.studio/apps/95208d03-77a1-48eb-bea1-c2515b272263',
+    level: 'starter',
   },
   {
     id: 'hyper_realism',
@@ -208,5 +251,6 @@ export const mockApps: AppItem[] = [
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699493e96bac2476ff053efa.png',
     link: 'https://ai.studio/apps/5d17831a-4727-456c-9329-3be49d836e6f',
+    level: 'starter',
   }
 ];

@@ -13,7 +13,7 @@ interface AdminScreenProps {
 export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStatus, setEditStatus] = useState<'unpaid' | 'paid' | 'admin' | 'legacy'>('unpaid');
+  const [editStatus, setEditStatus] = useState<User['status']>('unpaid');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
 
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserStatus, setNewUserStatus] = useState<'unpaid' | 'paid' | 'admin' | 'legacy'>('paid');
+  const [newUserStatus, setNewUserStatus] = useState<User['status']>('pro');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const confirmDelete = async (id: string) => {
@@ -173,7 +173,10 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
                   onChange={(e) => setNewUserStatus(e.target.value as any)}
                   className="bg-zinc-950 border border-zinc-700 text-zinc-100 text-sm rounded-md px-3 py-2 focus:outline-none focus:border-[#dcfb80]"
                 >
-                  <option value="paid">Paid</option>
+                  <option value="starter">Starter ($27)</option>
+                  <option value="pro">Pro ($97)</option>
+                  <option value="elite">Elite ($197)</option>
+                  <option value="paid">Paid (Legacy default)</option>
                   <option value="unpaid">Unpaid</option>
                   <option value="legacy">Legacy</option>
                   <option value="admin">Admin</option>
@@ -228,16 +231,22 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
                               className="bg-zinc-950 border border-zinc-700 text-zinc-100 text-sm rounded-md focus:ring-[#dcfb80] focus:border-[#dcfb80] block w-full p-2"
                             >
                               <option value="unpaid">Unpaid</option>
+                              <option value="starter">Starter</option>
+                              <option value="pro">Pro</option>
+                              <option value="elite">Elite</option>
                               <option value="paid">Paid</option>
                               <option value="legacy">Legacy</option>
                               <option value="admin">Admin</option>
                             </select>
                           ) : (
                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide
-                              ${user.status === 'paid' ? 'bg-[#dcfb80]/10 text-[#dcfb80] border border-[#dcfb80]/20' : 
+                              ${user.status === 'starter' ? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20' :
+                                user.status === 'pro' ? 'bg-[#dcfb80]/10 text-[#dcfb80] border border-[#dcfb80]/20' :
+                                user.status === 'elite' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                                user.status === 'paid' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 
                                 user.status === 'legacy' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                user.status === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                                'bg-red-500/10 text-red-400 border border-red-500/20'}
+                                user.status === 'admin' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
+                                'bg-zinc-500/10 text-zinc-500 border border-zinc-500/20'}
                             `}>
                               {user.status}
                             </span>

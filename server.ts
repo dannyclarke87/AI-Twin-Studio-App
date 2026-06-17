@@ -53,23 +53,25 @@ async function startServer() {
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.client_reference_id;
+        const tier = session.metadata?.tier || "elite";
 
         if (userId) {
           try {
             if (getApps().length > 0) {
               const db = getFirestore();
               await db.collection("users").doc(userId).update({
-                status: "paid",
+                status: tier,
                 updatedAt: FieldValue.serverTimestamp(),
               });
-              console.log(`Successfully updated user ${userId} to paid via webhook`);
+              console.log(`Successfully updated user ${userId} to tier ${tier} via webhook`);
 
               const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
               if (ghlWebhookUrl) {
                 try {
                   const payload = {
                     event: "payment_success",
-                    product: "AI Twin Studio",
+                    product: `AI Twin Studio - ${tier.toUpperCase()}`,
+                    tier: tier,
                     user: {
                       uid: userId,
                       email: session.customer_details?.email || "",
@@ -162,19 +164,69 @@ async function startServer() {
       const originUrl = req.get('origin') || req.get('referer')?.replace(/\/$/, "");
       const appUrl = process.env.APP_URL || originUrl || `http://localhost:${PORT}`;
 
-      const { userId } = req.body;
+      const { userId, tier = "elite", fpromTid = "" } = req.body;
+
+      // Fetch user's current status from Firestore to calculate pro-rated price
+      let currentStatus = "unpaid";
+      if (userId && getApps().length > 0) {
+        try {
+          const db = getFirestore();
+          const userSnap = await db.collection("users").doc(userId).get();
+          if (userSnap.exists) {
+            currentStatus = userSnap.data()?.status || "unpaid";
+          }
+        } catch (err) {
+          console.error("Error reading user status for checkout:", err);
+        }
+      }
+
+      // Base non-discounted pricing: Starter ($27), Pro ($97), Elite ($197)
+      // TEMPORARY: Starter set to £1 (100 GB_PENCE), Pro set to £2 (200 GB_PENCE) for live testing
+      let amount = 19700; // default Elite
+      let productName = "AI Twin Studio - Elite";
+      let productDesc = "Unlock Elite AI Twin Studio tools (all-access)";
+
+      if (tier === "starter") {
+        amount = 100; // £1
+        productName = "AI Twin Studio - Starter Plan";
+        productDesc = "Unlock basic AI Twin Studio tools";
+      } else if (tier === "pro") {
+        if (currentStatus === "starter") {
+          amount = 100; // £2 - £1 = £1 upgrade
+          productName = "AI Twin Studio - Upgrade to Pro";
+          productDesc = "Pro-rated upgrade from Starter to Pro Plan";
+        } else {
+          amount = 200; // £2
+          productName = "AI Twin Studio - Pro Plan";
+          productDesc = "Unlock professional AI Twin Studio tools";
+        }
+      } else if (tier === "elite") {
+        if (currentStatus === "starter") {
+          amount = 19600; // £197 - £1
+          productName = "AI Twin Studio - Upgrade to Elite";
+          productDesc = "Pro-rated upgrade from Starter to Elite Plan";
+        } else if (currentStatus === "pro") {
+          amount = 19500; // £197 - £2
+          productName = "AI Twin Studio - Upgrade to Elite";
+          productDesc = "Pro-rated upgrade from Pro to Elite Plan";
+        } else {
+          amount = 19700;
+          productName = "AI Twin Studio - Elite Plan";
+          productDesc = "Unlock Elite AI Twin Studio tools (all-access)";
+        }
+      }
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
           {
             price_data: {
-              currency: "usd",
+              currency: "gbp",
               product_data: {
-                name: "AI Twin Studio",
-                description: "Unlock all AI Twin Studio tools",
+                name: productName,
+                description: productDesc,
               },
-              unit_amount: 29700, // $297.00
+              unit_amount: amount,
             },
             quantity: 1,
           },
@@ -183,6 +235,11 @@ async function startServer() {
         success_url: `${appUrl}/?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/?canceled=true`,
         client_reference_id: userId,
+        metadata: {
+          tier,
+          userId,
+          fp_tid: fpromTid,
+        },
       });
 
       res.json({ url: session.url });
@@ -204,7 +261,18 @@ async function startServer() {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
       if (session.payment_status === "paid") {
-        res.json({ success: true, userId: session.client_reference_id });
+        const userId = session.client_reference_id;
+        const tier = session.metadata?.tier || "elite";
+
+        if (userId && getApps().length > 0) {
+          const db = getFirestore();
+          await db.collection("users").doc(userId).update({
+            status: tier,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+
+        res.json({ success: true, userId: session.client_reference_id, tier });
       } else {
         res.json({ success: false });
       }

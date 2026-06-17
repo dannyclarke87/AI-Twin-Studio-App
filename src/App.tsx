@@ -14,13 +14,55 @@ import { PaywallScreen } from './components/PaywallScreen';
 import { DashboardScreen } from './components/DashboardScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { AdminScreen } from './components/AdminScreen';
+import { GettingStartedScreen } from './components/GettingStartedScreen';
+
+function getFirstPromoterTid() {
+  try {
+    const match = document.cookie.match(/(^|;)\s*_fprom_track\s*=\s*([^;]+)/);
+    return match ? match[2] : '';
+  } catch (e) {
+    return '';
+  }
+}
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>('logged-out');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [viewState, setViewState] = useState<'dashboard' | 'admin'>('admin');
+  const [viewState, setViewState] = useState<'dashboard' | 'admin' | 'getting_started'>('dashboard');
+
+  useEffect(() => {
+    // Initialize First Promoter Tracking if account ID is set in the environment
+    const fpId = (import.meta as any).env?.VITE_FIRST_PROMOTER_ID;
+    if (fpId && fpId !== 'your_first_promoter_account_id_here') {
+      const win = window as any;
+      
+      // Inject First Promoter script dynamically if not present
+      if (!win.fprom) {
+        win.fprom = function() {
+          (win.fprom.q = win.fprom.q || []).push(arguments);
+        };
+        try {
+          const doc = document;
+          const script = doc.createElement('script');
+          script.async = true;
+          script.src = 'https://cdn.firstpromoter.com/fprom.js';
+          const firstScript = doc.getElementsByTagName('script')[0];
+          if (firstScript && firstScript.parentNode) {
+            firstScript.parentNode.insertBefore(script, firstScript);
+          } else {
+            doc.head.appendChild(script);
+          }
+        } catch (e) {
+          console.error('Error dynamic-loading fprom script', e);
+        }
+      }
+
+      win.fprom('init', fpId);
+      win.fprom('track', 'click');
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -75,6 +117,19 @@ export default function App() {
             } catch (err) {
               console.error('Failed to trigger registration webhook', err);
             }
+
+            // Track First Promoter affiliate signup event
+            try {
+              const win = window as any;
+              if (win.fprom) {
+                win.fprom('track', 'signup', {
+                  email: firebaseUser.email,
+                  uid: firebaseUser.uid,
+                });
+              }
+            } catch (e) {
+              console.error('First Promoter signup error', e);
+            }
             
             if (hasLegacyData) {
               try {
@@ -90,10 +145,10 @@ export default function App() {
             setAuthState(currentUserStatus);
           }
 
-          // Handle successful Stripe payment redirect
+          // Handle successful Stripe payment redirect / upgrades dynamically
           const urlParams = new URLSearchParams(window.location.search);
           const sessionId = urlParams.get('session_id');
-          if (sessionId && currentUserStatus === 'unpaid') {
+          if (sessionId) {
             try {
               const res = await fetch('/api/verify-session', {
                 method: 'POST',
@@ -102,13 +157,14 @@ export default function App() {
               });
               const data = await res.json();
               if (data.success && data.userId === firebaseUser.uid) {
-                 await updateDoc(userRef, {
-                    status: 'paid',
-                    updatedAt: serverTimestamp()
-                 });
-                 setAuthState('paid');
-                 // Remove session_id from URL to prevent re-verifying
-                 window.history.replaceState({}, document.title, window.location.pathname);
+                  const verifiedTier = data.tier || 'elite';
+                  await updateDoc(userRef, {
+                     status: verifiedTier,
+                     updatedAt: serverTimestamp()
+                  });
+                  currentUserStatus = verifiedTier;
+                  // Remove session_id from URL to prevent re-verifying
+                  window.history.replaceState({}, document.title, window.location.pathname);
               }
             } catch (err) {
               console.error('Failed to verify session', err);
@@ -154,13 +210,17 @@ export default function App() {
     // Auth object listener handles the logic
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (tier: 'starter' | 'pro' | 'elite' = 'elite') => {
     if (auth.currentUser) {
         try {
             const res = await fetch('/api/create-checkout-session', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ userId: auth.currentUser.uid })
+               body: JSON.stringify({ 
+                 userId: auth.currentUser.uid,
+                 tier,
+                 fpromTid: getFirstPromoterTid()
+               })
             });
 
             if (!res.ok) {
@@ -187,6 +247,8 @@ export default function App() {
      return <div className="min-h-[100dvh] bg-zinc-950 flex items-center justify-center"><div className="text-zinc-500">Loading...</div></div>;
   }
 
+  const isUserPaid = ['paid', 'starter', 'pro', 'elite', 'legacy', 'admin'].includes(authState);
+
   return (
     <>
       {authState === 'logged-out' && (
@@ -197,12 +259,21 @@ export default function App() {
         <PaywallScreen onUpgrade={handleUpgrade} onLogout={handleLogout} />
       )}
       
-      {(authState === 'paid' || authState === 'legacy' || (authState === 'admin' && viewState === 'dashboard')) && (
+      {isUserPaid && viewState === 'dashboard' && (
         <DashboardScreen 
           onLogout={handleLogout} 
           onOpenSettings={() => setIsSettingsOpen(true)}
           isAdmin={authState === 'admin'}
           onOpenAdmin={() => setViewState('admin')}
+          onGettingStarted={() => setViewState('getting_started')}
+          userStatus={authState}
+          onUpgrade={handleUpgrade}
+        />
+      )}
+
+      {(isUserPaid || authState === 'admin') && viewState === 'getting_started' && (
+        <GettingStartedScreen
+          onBackToDashboard={() => setViewState('dashboard')}
         />
       )}
 

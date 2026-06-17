@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 
 interface AuthScreenProps {
@@ -8,6 +8,9 @@ interface AuthScreenProps {
 
 export function AuthScreen({ onLogin }: AuthScreenProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleGoogleLogin = async () => {
     try {
@@ -18,6 +21,34 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
       }
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+       setError("Email and password are required.");
+       return;
+    }
+    try {
+        setError(null);
+        if (isSignUp) {
+            const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+            if (result.user && result.user.email) {
+                onLogin(result.user.email.toLowerCase().trim());
+            }
+        } else {
+            const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+            if (result.user && result.user.email) {
+                onLogin(result.user.email.toLowerCase().trim());
+            }
+        }
+    } catch (err: any) {
+        let msg = err.message;
+        if (err.code === 'auth/email-already-in-use') msg = 'Email is already in use. Please sign in.';
+        else if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+        else if (err.code === 'auth/weak-password') msg = 'Password should be at least 6 characters.';
+        setError(msg);
     }
   };
 
@@ -33,9 +64,38 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
 
         {error && <div className="text-red-400 text-sm mb-4">{error}</div>}
         
+        <form onSubmit={handleEmailAuth} className="w-full flex flex-col gap-4 mb-6">
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-3 text-zinc-100 focus:outline-none focus:border-[#dcfb80] transition-colors"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-3 text-zinc-100 focus:outline-none focus:border-[#dcfb80] transition-colors"
+          />
+          <button
+            type="submit"
+            className="w-full bg-[#dcfb80] text-black font-semibold py-3 rounded-md hover:opacity-90 transition-opacity"
+          >
+            {isSignUp ? 'Sign up' : 'Sign in'}
+          </button>
+        </form>
+
+        <div className="flex items-center gap-4 w-full mb-6">
+            <div className="h-px bg-zinc-700 flex-1"></div>
+            <span className="text-sm text-zinc-500">OR</span>
+            <div className="h-px bg-zinc-700 flex-1"></div>
+        </div>
+
         <button
           onClick={handleGoogleLogin}
-          className="w-full bg-[#dcfb80] text-black font-semibold py-3 flex items-center justify-center gap-2 rounded-md mt-2 hover:opacity-90 transition-opacity"
+          className="w-full bg-zinc-800 text-zinc-100 border border-zinc-700 font-semibold py-3 flex items-center justify-center gap-2 rounded-md hover:bg-zinc-700 transition-colors"
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path
@@ -57,6 +117,17 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
           </svg>
           Sign in with Google
         </button>
+
+        <div className="mt-8 text-sm text-zinc-400">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button 
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-white hover:text-[#dcfb80] underline transition-colors"
+                type="button"
+            >
+                {isSignUp ? 'Sign in' : 'Sign up'}
+            </button>
+        </div>
       </div>
     </div>
   );
