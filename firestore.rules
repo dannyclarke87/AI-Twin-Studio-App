@@ -27,7 +27,7 @@ service cloud.firestore {
       let isCreate = request.method == 'create';
       let hasKeys = isCreate ? data.keys().hasAll(['email', 'status', 'createdAt']) && data.keys().size() <= 4 : true;
       let validEmail = data.email is string && data.email.size() <= 300;
-      let validStatus = data.status in ['unpaid', 'paid', 'admin', 'legacy'];
+      let validStatus = data.status in ['unpaid', 'paid', 'admin', 'legacy', 'starter', 'pro', 'elite'];
       return hasKeys && validEmail && validStatus;
     }
 

@@ -158,11 +158,8 @@ export default function App() {
               const data = await res.json();
               if (data.success && data.userId === firebaseUser.uid) {
                   const verifiedTier = data.tier || 'elite';
-                  await updateDoc(userRef, {
-                     status: verifiedTier,
-                     updatedAt: serverTimestamp()
-                  });
                   currentUserStatus = verifiedTier;
+                  setAuthState(verifiedTier);
                   // Remove session_id from URL to prevent re-verifying
                   window.history.replaceState({}, document.title, window.location.pathname);
               }

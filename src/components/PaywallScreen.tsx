@@ -45,7 +45,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
             Get Starter Access
           </button>
 
-          <div className="space-y-3.5 mt-auto">
+          <div className="space-y-3.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Includes 5 core apps:</h4>
             {[
               "Pro Studio",
@@ -85,7 +85,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
             Get Pro Access
           </button>
 
-          <div className="space-y-3.5 mt-auto">
+          <div className="space-y-3.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#dcfb80] mb-2">Everything in Starter plus:</h4>
             {[
               "Studio Dashboard",
@@ -125,7 +125,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
             Get Elite Access
           </button>
 
-          <div className="space-y-3.5 mt-auto">
+          <div className="space-y-3.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">All Access Pass:</h4>
             {[
               "All Starter & Pro Studios",

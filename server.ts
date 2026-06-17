@@ -59,14 +59,24 @@ async function startServer() {
           try {
             if (getApps().length > 0) {
               const db = getFirestore();
-              await db.collection("users").doc(userId).update({
+              const userRef = db.collection("users").doc(userId);
+              const userSnap = await userRef.get();
+              
+              let lastProcessedSessionId = "";
+              if (userSnap.exists) {
+                lastProcessedSessionId = userSnap.data()?.lastProcessedSessionId || "";
+              }
+
+              // Update Firestore safely
+              await userRef.set({
                 status: tier,
                 updatedAt: FieldValue.serverTimestamp(),
-              });
+                lastProcessedSessionId: session.id
+              }, { merge: true });
               console.log(`Successfully updated user ${userId} to tier ${tier} via webhook`);
 
               const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
-              if (ghlWebhookUrl) {
+              if (ghlWebhookUrl && lastProcessedSessionId !== session.id) {
                 try {
                   const payload = {
                     event: "payment_success",
@@ -96,13 +106,14 @@ async function startServer() {
                 } catch (ghlErr) {
                   console.error("Error connecting to GHL webhook:", ghlErr);
                 }
+              } else if (lastProcessedSessionId === session.id) {
+                console.log("GHL webhook already triggered for this session; skipping duplicate.");
               }
             } else {
               console.warn("Firebase Admin not initialized, cannot update user from webhook.");
             }
           } catch (error) {
             console.error("Error updating user in Firestore:", error);
-            // It's a good idea to return 500 here so Stripe will retry if the DB update fails.
             return res.status(500).json({ error: "Failed to update user in database" });
           }
         }
@@ -266,10 +277,65 @@ async function startServer() {
 
         if (userId && getApps().length > 0) {
           const db = getFirestore();
-          await db.collection("users").doc(userId).update({
+          const userRef = db.collection("users").doc(userId);
+          const userSnap = await userRef.get();
+          
+          let lastProcessedSessionId = "";
+          let userEmail = session.customer_details?.email || "";
+          let userName = session.customer_details?.name || "";
+          
+          if (userSnap.exists) {
+            const data = userSnap.data();
+            lastProcessedSessionId = data?.lastProcessedSessionId || "";
+            if (!userEmail) userEmail = data?.email || "";
+            if (!userName) userName = data?.name || "";
+          }
+
+          // Update Firestore safely
+          await userRef.set({
             status: tier,
             updatedAt: FieldValue.serverTimestamp(),
-          });
+            lastProcessedSessionId: sessionId
+          }, { merge: true });
+          console.log(`Successfully verified and updated user ${userId} to tier ${tier} via status verification`);
+
+          // Trigger backup GHL webhook if not already sent for this session ID
+          if (lastProcessedSessionId !== sessionId) {
+            const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
+            if (ghlWebhookUrl) {
+              try {
+                const payload = {
+                  event: "payment_success",
+                  product: `AI Twin Studio - ${tier.toUpperCase()}`,
+                  tier: tier,
+                  user: {
+                    uid: userId,
+                    email: userEmail,
+                    name: userName,
+                    role: "user"
+                  }
+                };
+                console.log("Triggering backup GHL webhook from session verification with payload:", payload);
+                
+                const ghlRes = await fetch(ghlWebhookUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(payload)
+                });
+                if (!ghlRes.ok) {
+                  console.error("Failed to trigger GHL webhook from verify-session:", await ghlRes.text());
+                } else {
+                  console.log("Successfully triggered backup GHL inbound webhook from verify-session");
+                }
+              } catch (ghlErr) {
+                console.error("Error connecting to GHL webhook from verify-session:", ghlErr);
+              }
+            }
+          } else {
+            console.log("GHL webhook already triggered for this session; skipping redundant backup trigger.");
+          }
         }
 
         res.json({ success: true, userId: session.client_reference_id, tier });
