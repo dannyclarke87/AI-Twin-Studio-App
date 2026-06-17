@@ -7,13 +7,14 @@ if (!ghlWebhookUrl || ghlWebhookUrl.includes('your_hook_id_here')) {
 
 const payload = {
   event: "payment_success",
-  product: "AI Twin Studio",
-  user: {
-    uid: "test_user_123",
-    email: "test@example.com",
-    name: "Test User",
-    role: "user"
-  }
+  product: "AI Twin Studio - ELITE",
+  email: "test@example.com",
+  name: "Test User",
+  firstName: "Test",
+  lastName: "User",
+  uid: "test_user_123",
+  userId: "test_user_123",
+  stripeSessionId: "cs_test_123"
 };
 
 console.log("Sending test payload to GHL...");

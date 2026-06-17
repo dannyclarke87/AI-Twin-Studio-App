@@ -96,16 +96,23 @@ async function startServer() {
               const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
               if (ghlWebhookUrl && lastProcessedSessionId !== session.id) {
                 try {
+                  const customerEmail = session.customer_details?.email || "";
+                  const customerName = session.customer_details?.name || "";
+                  const nameParts = customerName ? customerName.trim().split(/\s+/) : [];
+                  const firstName = nameParts[0] || "";
+                  const lastName = nameParts.slice(1).join(" ") || "";
+
                   const payload = {
                     event: "payment_success",
                     product: `AI Twin Studio - ${tier.toUpperCase()}`,
                     tier: tier,
-                    user: {
-                      uid: userId,
-                      email: session.customer_details?.email || "",
-                      name: session.customer_details?.name || "",
-                      role: "user"
-                    }
+                    email: customerEmail,
+                    name: customerName,
+                    firstName: firstName,
+                    lastName: lastName,
+                    uid: userId,
+                    userId: userId,
+                    stripeSessionId: session.id
                   };
                   console.log("Triggering GHL webhook with payload:", payload);
                   
@@ -154,15 +161,21 @@ async function startServer() {
     const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
     if (ghlWebhookUrl) {
       try {
+        const nameParts = (email || "").split("@")[0].split(/[._\-]/);
+        const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : "";
+        const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : "";
+        const fallbackName = firstName ? `${firstName} ${lastName}`.trim() : "";
+
         const payload = {
           event: "user_registered",
           product: "AI Twin Studio",
-          user: {
-            uid,
-            email,
-            status,
-            role: "user"
-          }
+          email: email,
+          uid: uid,
+          userId: uid,
+          status: status,
+          firstName: firstName,
+          lastName: lastName,
+          name: fallbackName
         };
         console.log("Triggering GHL webhook for registration:", payload);
         
@@ -195,14 +208,16 @@ async function startServer() {
 
       const { userId, tier = "elite", fpromTid = "" } = req.body;
 
-      // Fetch user's current status from Firestore to calculate pro-rated price
+      // Fetch user's current status and email from Firestore to calculate pro-rated price and pre-fill Stripe
       let currentStatus = "unpaid";
+      let customerEmail = "";
       if (userId && getApps().length > 0) {
         try {
           const db = getFirestoreDb();
           const userSnap = await db.collection("users").doc(userId).get();
           if (userSnap.exists) {
             currentStatus = userSnap.data()?.status || "unpaid";
+            customerEmail = userSnap.data()?.email || "";
           }
         } catch (err) {
           console.error("Error reading user status for checkout:", err);
@@ -247,6 +262,7 @@ async function startServer() {
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
+        customer_email: customerEmail || undefined,
         line_items: [
           {
             price_data: {
@@ -322,16 +338,21 @@ async function startServer() {
             const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
             if (ghlWebhookUrl) {
               try {
+                const nameParts = (userName || "").trim().split(/\s+/);
+                const firstName = nameParts[0] || "";
+                const lastName = nameParts.slice(1).join(" ") || "";
+
                 const payload = {
                   event: "payment_success",
                   product: `AI Twin Studio - ${tier.toUpperCase()}`,
                   tier: tier,
-                  user: {
-                    uid: userId,
-                    email: userEmail,
-                    name: userName,
-                    role: "user"
-                  }
+                  email: userEmail,
+                  name: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  uid: userId,
+                  userId: userId,
+                  stripeSessionId: sessionId
                 };
                 console.log("Triggering backup GHL webhook from session verification with payload:", payload);
                 
