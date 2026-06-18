@@ -33,7 +33,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
             <h3 className="text-lg font-bold text-zinc-300 mb-1">Starter</h3>
             <p className="text-xs text-zinc-500 min-h-[32px]">Perfect for individuals starting their AI content journey.</p>
             <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-3xl md:text-4xl font-extrabold">£1</span>
+              <span className="text-3xl md:text-4xl font-extrabold">$27</span>
               <span className="text-zinc-500 text-xs font-semibold">one-time</span>
             </div>
           </div>
@@ -73,7 +73,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
             <h3 className="text-lg font-bold text-white mb-1">Pro</h3>
             <p className="text-xs text-zinc-400 min-h-[32px]">Essential toolbox for full-time content developers.</p>
             <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-3xl md:text-4xl font-extrabold text-[#dcfb80]">£2</span>
+              <span className="text-3xl md:text-4xl font-extrabold text-[#dcfb80]">$97</span>
               <span className="text-zinc-500 text-xs font-semibold">one-time</span>
             </div>
           </div>
@@ -113,7 +113,7 @@ export function PaywallScreen({ onUpgrade, onLogout }: PaywallScreenProps) {
             <h3 className="text-lg font-bold text-zinc-300 mb-1">Elite</h3>
             <p className="text-xs text-zinc-500 min-h-[32px]">Full creative agency access. Zero boundaries.</p>
             <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-3xl md:text-4xl font-extrabold">£197</span>
+              <span className="text-3xl md:text-4xl font-extrabold">$197</span>
               <span className="text-zinc-500 text-xs font-semibold">one-time</span>
             </div>
           </div>

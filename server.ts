@@ -123,21 +123,31 @@ async function startServer() {
 
                   const payload = {
                     event: "payment_success",
+                    event_type: "payment_success",
                     product: `AI Twin Studio - ${tier.toUpperCase()}`,
                     productName: tier === 'starter' ? 'AI Twin Studio - Starter Plan' : tier === 'pro' ? 'AI Twin Studio - Pro Plan' : 'AI Twin Studio - Elite Plan',
+                    product_name: tier === 'starter' ? 'AI Twin Studio - Starter Plan' : tier === 'pro' ? 'AI Twin Studio - Pro Plan' : 'AI Twin Studio - Elite Plan',
                     stripeProductName: stripeProductName,
+                    stripe_product_name: stripeProductName,
                     tier: tier,
                     plan: tier,
                     status: tier,
                     tag: tier,
                     tags: [tier],
                     email: customerEmail,
+                    contact_email: customerEmail,
                     name: customerName,
+                    full_name: customerName,
+                    contact_name: customerName,
                     firstName: firstName,
+                    first_name: firstName,
                     lastName: lastName,
+                    last_name: lastName,
                     uid: userId,
                     userId: userId,
-                    stripeSessionId: session.id
+                    user_id: userId,
+                    stripeSessionId: session.id,
+                    stripe_session_id: session.id
                   };
                   console.log("Triggering GHL webhook with payload:", payload);
                   
@@ -226,14 +236,21 @@ async function startServer() {
 
         const payload = {
           event: "user_registered",
+          event_type: "user_registered",
           product: "AI Twin Studio",
           email: email,
+          contact_email: email,
           uid: uid,
           userId: uid,
+          user_id: uid,
           status: status,
           firstName: firstName,
+          first_name: firstName,
           lastName: lastName,
-          name: fallbackName
+          last_name: lastName,
+          name: fallbackName,
+          full_name: fallbackName,
+          contact_name: fallbackName
         };
         console.log("Triggering GHL webhook for registration:", payload);
         
@@ -283,36 +300,35 @@ async function startServer() {
       }
 
       // Base non-discounted pricing: Starter ($27), Pro ($97), Elite ($197)
-      // TEMPORARY: Starter set to £1 (100 GB_PENCE), Pro set to £2 (200 GB_PENCE) for live testing
       let amount = 19700; // default Elite
       let productName = "AI Twin Studio - Elite";
       let productDesc = "Unlock Elite AI Twin Studio tools (all-access)";
 
       if (tier === "starter") {
-        amount = 100; // £1
+        amount = 2700; // $27
         productName = "AI Twin Studio - Starter Plan";
         productDesc = "Unlock basic AI Twin Studio tools";
       } else if (tier === "pro") {
         if (currentStatus === "starter") {
-          amount = 100; // £2 - £1 = £1 upgrade
+          amount = 7000; // $97 - $27 = $70 upgrade
           productName = "AI Twin Studio - Upgrade to Pro";
           productDesc = "Pro-rated upgrade from Starter to Pro Plan";
         } else {
-          amount = 200; // £2
+          amount = 9700; // $97
           productName = "AI Twin Studio - Pro Plan";
           productDesc = "Unlock professional AI Twin Studio tools";
         }
       } else if (tier === "elite") {
         if (currentStatus === "starter") {
-          amount = 19600; // £197 - £1
+          amount = 17000; // $197 - $27 = $170 upgrade
           productName = "AI Twin Studio - Upgrade to Elite";
           productDesc = "Pro-rated upgrade from Starter to Elite Plan";
         } else if (currentStatus === "pro") {
-          amount = 19500; // £197 - £2
+          amount = 10000; // $197 - $97 = $100 upgrade
           productName = "AI Twin Studio - Upgrade to Elite";
           productDesc = "Pro-rated upgrade from Pro to Elite Plan";
         } else {
-          amount = 19700;
+          amount = 19700; // $197
           productName = "AI Twin Studio - Elite Plan";
           productDesc = "Unlock Elite AI Twin Studio tools (all-access)";
         }
@@ -324,7 +340,7 @@ async function startServer() {
         line_items: [
           {
             price_data: {
-              currency: "gbp",
+              currency: "usd",
               product_data: {
                 name: productName,
                 description: productDesc,
@@ -405,21 +421,31 @@ async function startServer() {
 
                 const payload = {
                   event: "payment_success",
+                  event_type: "payment_success",
                   product: `AI Twin Studio - ${tier.toUpperCase()}`,
                   productName: tier === 'starter' ? 'AI Twin Studio - Starter Plan' : tier === 'pro' ? 'AI Twin Studio - Pro Plan' : 'AI Twin Studio - Elite Plan',
+                  product_name: tier === 'starter' ? 'AI Twin Studio - Starter Plan' : tier === 'pro' ? 'AI Twin Studio - Pro Plan' : 'AI Twin Studio - Elite Plan',
                   stripeProductName: stripeProductName || `AI Twin Studio - ${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan`,
+                  stripe_product_name: stripeProductName || `AI Twin Studio - ${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan`,
                   tier: tier,
                   plan: tier,
                   status: tier,
                   tag: tier,
                   tags: [tier],
                   email: userEmail,
+                  contact_email: userEmail,
                   name: userName,
+                  full_name: userName,
+                  contact_name: userName,
                   firstName: firstName,
+                  first_name: firstName,
                   lastName: lastName,
+                  last_name: lastName,
                   uid: userId,
                   userId: userId,
-                  stripeSessionId: sessionId
+                  user_id: userId,
+                  stripeSessionId: sessionId,
+                  stripe_session_id: sessionId
                 };
                 console.log("Triggering backup GHL webhook from session verification with payload:", payload);
                 
