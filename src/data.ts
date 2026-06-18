@@ -7,7 +7,7 @@ export const mockApps: AppItem[] = [
     description: 'Create image of a whiteboard message',
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a31de218892600038ae7d9a.png',
-    link: 'https://ai.studio/apps/81f45cdd-5a54-4222-8743-5d92d7b02ba2',
+    link: 'https://ai.studio/apps/e8afccd0-e447-494b-8fde-ff322e4df162',
     level: 'pro',
   },
   {
@@ -25,7 +25,7 @@ export const mockApps: AppItem[] = [
     description: 'Create a podcast talking head video',
     category: 'Video',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69958998905d478293958731.png',
-    link: 'https://ai.studio/apps/84ea5f98-73d8-418e-9ef7-3abfc65a5b40',
+    link: 'https://ai.studio/apps/1a7fb385-5a82-4060-9de4-d210594e6ec3',
     level: 'pro',
   },
   {
@@ -250,7 +250,7 @@ export const mockApps: AppItem[] = [
     description: 'Create hyper real images with prompts',
     category: 'Images',
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699493e96bac2476ff053efa.png',
-    link: 'https://ai.studio/apps/5d17831a-4727-456c-9329-3be49d836e6f',
+    link: 'https://ai.studio/apps/1b1dd7cd-0e09-400e-9a0e-24c41b017075',
     level: 'starter',
   }
 ];
