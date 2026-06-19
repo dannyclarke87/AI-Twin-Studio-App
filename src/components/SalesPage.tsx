@@ -390,64 +390,6 @@ export function SalesPage({
             </a>
           </div>
 
-          {/* Interactive Promo Widget / Video Frame */}
-          <div className="w-full max-w-4xl mx-auto bg-zinc-950/80 border border-zinc-800 rounded-2xl p-3 shadow-2xl relative">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[#dcfb80]/15 to-transparent pointer-events-none"></div>
-            
-            <div 
-              className={`bg-[#030303] rounded-xl overflow-hidden aspect-[16/9] relative flex flex-col justify-center items-center group ${!demoActive ? 'cursor-pointer' : ''}`}
-              onClick={() => {
-                if (!demoActive) setDemoActive(true);
-              }}
-            >
-              {demoActive ? (
-                <div className="w-full h-full relative bg-black flex items-center justify-center">
-                  <video 
-                    src="https://assets.cdn.filesafe.space/3z2YfZikrqvBoykPWDU5/media/6a26e3ed19b4ff338be12328.mp4"
-                    className="w-full h-full object-contain" 
-                    controls 
-                    autoPlay 
-                    playsInline
-                  />
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDemoActive(false);
-                    }}
-                    className="absolute top-4 right-4 z-20 bg-black/60 hover:bg-black/80 text-white hover:text-[#dcfb80] p-2 rounded-full transition-colors border border-zinc-800 cursor-pointer flex items-center justify-center shadow-lg"
-                    title="Close Video"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {/* Backdrop representative graphic */}
-                  <img 
-                    src="https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a3243faad2dd4493c086f47.png" 
-                    alt="AI Twin Studio Dashboard mockup" 
-                    className="w-full h-full object-cover opacity-35 filter blur-[2px] scale-[1.03] transition-all group-hover:scale-100 group-hover:opacity-40"
-                  />
-                  
-                  {/* Absolute positioning items */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                  
-                  <div className="absolute flex flex-col items-center gap-4 text-center px-4">
-                    <div className="w-16 h-16 rounded-full bg-[#dcfb80] hover:scale-110 active:scale-95 text-zinc-950 flex items-center justify-center shadow-lg transition-transform duration-300">
-                      <Play className="w-6 h-6 fill-current ml-1" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-white tracking-tight">Watch the AI Twin Studio Demo</h4>
-                      <p className="text-zinc-400 text-xs sm:text-sm mt-1 max-w-md">
-                        Take a 2-minute visual tour showing how our 24+ integrated content engines power unlimited organic viral traffic.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
         </div>
       </section>
 
