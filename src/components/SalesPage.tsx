@@ -3,7 +3,7 @@ import {
   Check, Sparkles, Lock, ArrowRight, ShieldCheck, 
   HelpCircle, Users, Layers, Video, Image as ImageIcon, 
   FileText, Volume2, ChevronDown, ChevronUp, Play, 
-  ExternalLink, LogIn, LogOut, CheckCircle, Info, Star
+  ExternalLink, LogIn, LogOut, CheckCircle, Info, Star, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { mockApps } from '../data';
@@ -394,40 +394,30 @@ export function SalesPage({
           <div className="w-full max-w-4xl mx-auto bg-zinc-950/80 border border-zinc-800 rounded-2xl p-3 shadow-2xl relative">
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[#dcfb80]/15 to-transparent pointer-events-none"></div>
             
-            <div className="bg-[#030303] rounded-xl overflow-hidden aspect-[16/9] relative flex flex-col justify-center items-center group cursor-pointer" onClick={() => setDemoActive(!demoActive)}>
+            <div 
+              className={`bg-[#030303] rounded-xl overflow-hidden aspect-[16/9] relative flex flex-col justify-center items-center group ${!demoActive ? 'cursor-pointer' : ''}`}
+              onClick={() => {
+                if (!demoActive) setDemoActive(true);
+              }}
+            >
               {demoActive ? (
-                <div className="w-full h-full bg-zinc-950 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-xs text-[#dcfb80] rounded-full uppercase tracking-wider font-semibold mb-4">
-                    Active Studio Simulation
-                  </span>
-                  <h3 className="text-xl md:text-2xl font-black text-white mb-2">Everything you need inside AI Twin Studio</h3>
-                  <p className="text-sm text-zinc-400 max-w-md mb-6">
-                    A look inside the complete dashboard. Tap into Baddie Studio, Meme Studio, Voice Synthesizers, POV creators, and Podcast generators seamlessly.
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-2xl px-4">
-                    <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-left">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400 mb-2"></div>
-                      <div className="font-bold text-xs white">Ultra Realism</div>
-                      <div className="text-[10px] text-zinc-500">Flux fine-tunes</div>
-                    </div>
-                    <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-left">
-                      <div className="w-2 h-2 rounded-full bg-cyan-400 mb-2"></div>
-                      <div className="font-bold text-xs white">Voice Cloning</div>
-                      <div className="text-[10px] text-zinc-500">ElevenLabs sync</div>
-                    </div>
-                    <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-left">
-                      <div className="w-2 h-2 rounded-full bg-[#dcfb80] mb-2"></div>
-                      <div className="font-bold text-xs white">VSL B-Roll</div>
-                      <div className="text-[10px] text-zinc-500">Automated video</div>
-                    </div>
-                    <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-left">
-                      <div className="w-2 h-2 rounded-full bg-purple-400 mb-2"></div>
-                      <div className="font-bold text-xs white">Psych Triggers</div>
-                      <div className="text-[10px] text-zinc-500">18 NLP frames</div>
-                    </div>
-                  </div>
-                  <button onClick={() => setDemoActive(false)} className="mt-8 text-xs text-zinc-500 hover:text-white transition-all underline">
-                    Return to Video Showcase
+                <div className="w-full h-full relative bg-black flex items-center justify-center">
+                  <video 
+                    src="https://assets.cdn.filesafe.space/3z2YfZikrqvBoykPWDU5/media/6a26e3ed19b4ff338be12328.mp4"
+                    className="w-full h-full object-contain" 
+                    controls 
+                    autoPlay 
+                    playsInline
+                  />
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDemoActive(false);
+                    }}
+                    className="absolute top-4 right-4 z-20 bg-black/60 hover:bg-black/80 text-white hover:text-[#dcfb80] p-2 rounded-full transition-colors border border-zinc-800 cursor-pointer flex items-center justify-center shadow-lg"
+                    title="Close Video"
+                  >
+                    <X size={16} />
                   </button>
                 </div>
               ) : (
