@@ -11,6 +11,7 @@ import { handleFirestoreError, OperationType } from './utils/firebaseErrors';
 import { AuthState, User } from './types';
 import { AuthScreen } from './components/AuthScreen';
 import { PaywallScreen } from './components/PaywallScreen';
+import { SalesPage } from './components/SalesPage';
 import { DashboardScreen } from './components/DashboardScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { AdminScreen } from './components/AdminScreen';
@@ -248,12 +249,15 @@ export default function App() {
 
   return (
     <>
-      {authState === 'logged-out' && (
-        <AuthScreen onLogin={handleLogin} />
-      )}
-      
-      {authState === 'unpaid' && (
-        <PaywallScreen onUpgrade={handleUpgrade} onLogout={handleLogout} />
+      {(authState === 'logged-out' || authState === 'unpaid') && (
+        <SalesPage 
+          onUpgrade={handleUpgrade} 
+          onLogin={handleLogin} 
+          isLoggedIn={authState === 'unpaid'} 
+          currentUserEmail={currentUserEmail}
+          currentUserStatus={authState}
+          onLogout={handleLogout}
+        />
       )}
       
       {isUserPaid && viewState === 'dashboard' && (

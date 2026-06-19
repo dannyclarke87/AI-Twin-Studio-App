@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LayoutGrid, PlayCircle, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface GettingStartedScreenProps {
   onBackToDashboard: () => void;
@@ -10,19 +11,25 @@ const VIDEOS = [
     id: 'intro',
     title: 'Platform Overview',
     description: 'A complete walkthrough of the AI Twin Studio platform, showing you how to navigate apps, find your favorites, and manage your account.',
-    url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' // placeholder
+    url: 'https://assets.cdn.filesafe.space/3z2YfZikrqvBoykPWDU5/media/6a353b990a683b64fe03ee6c.mp4'
   },
   {
     id: 'setup',
     title: 'Initial Setup',
     description: 'Learn how to set up your primary settings, integrate your basic details, and get ready to run your first applet.',
-    url: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+    url: 'https://assets.cdn.filesafe.space/3z2YfZikrqvBoykPWDU5/media/6a353b6e72754a77aa56f839.mp4'
   },
   {
     id: 'advanced',
     title: 'Advanced Features',
     description: 'Take your experience to the next level by utilizing our advanced AI tools and premium features available in the catalog.',
     url: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+  },
+  {
+    id: 'remix',
+    title: 'Remix Apps',
+    description: 'Learn how to easily clone and remix existing AI workspace applications to create your own tailored workflow tools.',
+    url: 'https://assets.cdn.filesafe.space/3z2YfZikrqvBoykPWDU5/media/6a353b9ff6a1b18cf28ba99b.mp4'
   }
 ];
 
@@ -147,14 +154,29 @@ export function GettingStartedScreen({ onBackToDashboard }: GettingStartedScreen
 
           {/* Video Container */}
           <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden aspect-video relative flex items-center justify-center mb-16 shadow-2xl">
-            {/* Real placeholder for actual video embed */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
-               <PlayCircle size={48} className="mb-4 opacity-50" />
-               <p className="text-sm font-medium uppercase tracking-widest">Video Container</p>
-               <p className="text-xs mt-2 opacity-75">(Replace with real embed code)</p>
-            </div>
-            {/* Replace this div with a real iframe once you have video URLs */}
-            {/* <iframe src={activeVideo.url} className="w-full h-full border-none" allowFullScreen></iframe> */}
+            {activeVideo.url.endsWith('.mp4') || activeVideo.url.includes('media/') ? (
+              <video 
+                key={activeVideo.url}
+                src={activeVideo.url} 
+                className="w-full h-full object-contain" 
+                controls 
+                autoPlay={false}
+                playsInline
+              />
+            ) : activeVideo.url && !activeVideo.url.includes('dQw4w9WgXcQ') ? (
+              <iframe 
+                src={activeVideo.url} 
+                className="w-full h-full border-none" 
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              ></iframe>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600 p-6 text-center">
+                <PlayCircle size={48} className="mb-4 opacity-50 text-[#dcfb80]" />
+                <p className="text-sm font-medium uppercase tracking-widest text-zinc-400">Video Demonstration</p>
+                <p className="text-xs mt-2 opacity-75 max-w-md">The training video for "{activeVideo.title}" will appear here when configured.</p>
+              </div>
+            )}
           </div>
 
           <hr className="border-zinc-800 mb-16" />
@@ -166,23 +188,33 @@ export function GettingStartedScreen({ onBackToDashboard }: GettingStartedScreen
               {FAQS.map((faq, idx) => {
                 const isOpen = openFaqIndex === idx;
                 return (
-                  <div key={idx} className="border border-zinc-800 rounded-lg bg-zinc-900/50 overflow-hidden">
+                  <div key={idx} className="border border-zinc-800 rounded-lg bg-zinc-900/50 overflow-hidden transition-colors duration-200">
                     <button
                       onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                      className="w-full text-left p-5 flex items-center justify-between hover:bg-zinc-800/50 transition-colors focus:outline-none"
+                      className="w-full text-left p-5 flex items-center justify-between hover:bg-zinc-800/30 transition-colors focus:outline-none"
                     >
                       <span className="font-semibold text-zinc-100">{faq.question}</span>
                       {isOpen ? (
-                        <ChevronUp size={20} className="text-zinc-500" />
+                        <ChevronUp size={20} className="text-[#dcfb80]" />
                       ) : (
                         <ChevronDown size={20} className="text-zinc-500" />
                       )}
                     </button>
-                    {isOpen && (
-                      <div className="p-5 text-zinc-400 leading-relaxed border-t border-zinc-800">
-                        {faq.answer}
-                      </div>
-                    )}
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: "auto" }}
+                          exit={{ height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden font-sans"
+                        >
+                          <div className="p-5 text-zinc-400 leading-relaxed border-t border-zinc-800 bg-zinc-950/20">
+                            {faq.answer}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )
               })}

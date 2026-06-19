@@ -16,7 +16,8 @@ import {
   X, 
   ChevronRight,
   Check,
-  Users
+  Users,
+  HelpCircle
 } from 'lucide-react';
 
 interface DashboardScreenProps {
@@ -202,6 +203,14 @@ export function DashboardScreen({
             </span>
             <ArrowUpRight size={14} className="opacity-60" />
           </a>
+
+          <a
+            href="mailto:support@aitwinstudio.co"
+            className="w-full flex items-center gap-3 p-2.5 rounded-md text-sm font-medium text-zinc-400 hover:text-[#dcfb80] transition-colors"
+          >
+            <HelpCircle size={18} />
+            <span>Support</span>
+          </a>
           
           {isAdmin && (
             <button
@@ -250,6 +259,10 @@ export function DashboardScreen({
           </div>
 
           <button onClick={onOpenSettings} className="text-zinc-400"><SettingsIcon size={20}/></button>
+          
+          <a href="mailto:support@aitwinstudio.co" className="text-zinc-400 hover:text-[#dcfb80]">
+            <HelpCircle size={20}/>
+          </a>
           {isAdmin && (
             <button onClick={onOpenAdmin} className="text-zinc-400 hover:text-purple-400">
               <Shield size={20}/>

@@ -123,7 +123,7 @@ export const mockApps: AppItem[] = [
     title: 'Vlog Studio',
     description: 'Create a vlog of your AI Twin',
     category: 'Video',
-    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/699c36fc9598d283eedbdf24.jpg',
+    image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/6a352fc42e3b9fd413d102a0.gif',
     link: 'https://ai.studio/apps/5882bdc5-3f2e-4338-9e44-d5234d620501',
     level: 'elite',
   },
@@ -223,7 +223,7 @@ export const mockApps: AppItem[] = [
     description: 'Add text to your image',
     category: ['Images', 'Text'],
     image: 'https://assets.cdn.filesafe.space/M9NfAaqREboWyOX206Po/media/69c28626ad14000ad93c00ad.png',
-    link: 'https://ai.studio/apps/dda8100d-b9ab-4768-95e3-4da6368b2694',
+    link: 'https://ai.studio/apps/c603bea3-dd97-4aad-ae6e-5e23aebb27cd',
     level: 'elite',
   },
   {
