@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { collection, doc, deleteDoc, updateDoc, onSnapshot, serverTimestamp, setDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, serverTimestamp, setDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrors';
 import { User } from '../types';
-import { LogOut, Trash2, Edit2, Check, X, LayoutGrid, Plus } from 'lucide-react';
+import { LogOut, Trash2, Edit2, Check, X, LayoutGrid, Plus, Users, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { PREDEFINED_PRO_USERS } from '../data/predefinedProUsers';
 
 interface AdminScreenProps {
   onLogout: () => void;
@@ -15,6 +16,104 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<User['status']>('unpaid');
   const [error, setError] = useState<string | null>(null);
+
+  // Bulk provisioning state
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [currentBulkUserEmail, setCurrentBulkUserEmail] = useState('');
+  const [bulkResults, setBulkResults] = useState<{
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: number;
+  } | null>(null);
+
+  const handleBulkProGrant = async () => {
+    if (isBulkImporting) return;
+    setIsBulkImporting(true);
+    setBulkProgress(0);
+    setBulkResults(null);
+    setError(null);
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+
+    try {
+      for (let i = 0; i < PREDEFINED_PRO_USERS.length; i++) {
+        const user = PREDEFINED_PRO_USERS[i];
+        const emailLower = user.email.toLowerCase().trim();
+        setCurrentBulkUserEmail(emailLower);
+
+        try {
+          // 1. Query the 'users' collection to check if there's any user with this email
+          const q = query(collection(db, 'users'), where('email', '==', emailLower));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            // User already has an active registration document
+            const existingDoc = querySnapshot.docs[0];
+            const currentStatus = existingDoc.data().status;
+
+            if (currentStatus !== 'pro' && currentStatus !== 'admin') {
+              // Update status to 'pro'
+              await updateDoc(doc(db, 'users', existingDoc.id), {
+                status: 'pro',
+                updatedAt: serverTimestamp()
+              });
+              updatedCount++;
+            } else {
+              skippedCount++;
+            }
+          } else {
+            // No registration found, check pre-approved email-based entry
+            const emailDocRef = doc(db, 'users', emailLower);
+            const emailDocSnap = await getDoc(emailDocRef);
+
+            if (emailDocSnap.exists()) {
+              const currentStatus = emailDocSnap.data()?.status;
+              if (currentStatus !== 'pro' && currentStatus !== 'admin') {
+                await updateDoc(emailDocRef, {
+                  status: 'pro',
+                  updatedAt: serverTimestamp()
+                });
+                updatedCount++;
+              } else {
+                skippedCount++;
+              }
+            } else {
+              // Create pre-approved entry
+              await setDoc(emailDocRef, {
+                email: emailLower,
+                status: 'pro',
+                createdAt: serverTimestamp()
+              });
+              createdCount++;
+            }
+          }
+        } catch (err) {
+          console.error(`Bulk import error for ${emailLower}:`, err);
+          errorCount++;
+        }
+
+        setBulkProgress(i + 1);
+      }
+
+      setBulkResults({
+        created: createdCount,
+        updated: updatedCount,
+        skipped: skippedCount,
+        errors: errorCount
+      });
+    } catch (err: any) {
+      console.error('Core bulk import loop failed', err);
+      setError('Core import runner failed. Check console for details.');
+    } finally {
+      setIsBulkImporting(false);
+      setCurrentBulkUserEmail('');
+    }
+  };
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -143,6 +242,90 @@ export function AdminScreen({ onLogout, onExit }: AdminScreenProps) {
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
           {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-4 text-sm">{error}</div>}
+          
+          {/* Bulk Pro Grant Section */}
+          <div className="mb-6 bg-zinc-900 border border-zinc-800 p-6 rounded-xl shadow-md">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="text-[#dcfb80]" size={20} />
+                  <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                    Bulk Pro Provisions
+                    <span className="bg-[#dcfb80]/10 text-[#dcfb80] text-xs font-semibold px-2 py-0.5 rounded-full border border-[#dcfb80]/20 font-mono">
+                      {PREDEFINED_PRO_USERS.length} Contacts
+                    </span>
+                  </h2>
+                </div>
+                <p className="text-sm text-zinc-400">
+                  Provision Pro-level access ($97 value) for the 72 pre-validated lead contacts from CSV.
+                </p>
+              </div>
+              
+              <button
+                onClick={handleBulkProGrant}
+                disabled={isBulkImporting}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold text-sm transition-all duration-150 shadow-sm ${
+                  isBulkImporting
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/50'
+                    : 'bg-[#dcfb80] text-zinc-900 hover:bg-[#cbe870] active:scale-95'
+                }`}
+              >
+                {isBulkImporting ? (
+                  <>
+                    <RefreshCw className="animate-spin" size={16} />
+                    <span>Provisioning ({bulkProgress}/{PREDEFINED_PRO_USERS.length})</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} />
+                    <span>Grant Pro to All 72 Contacts</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Progress Bar & Results */}
+            {(isBulkImporting || bulkResults) && (
+              <div className="mt-4 border-t border-zinc-800 pt-4 space-y-3 animate-fade-in">
+                {isBulkImporting && (
+                  <div>
+                    <div className="flex justify-between text-xs text-zinc-400 mb-1.5 font-mono">
+                      <span className="truncate max-w-[80%]">Processing: {currentBulkUserEmail || 'Initializing...'}</span>
+                      <span>{Math.round((bulkProgress / PREDEFINED_PRO_USERS.length) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-zinc-950 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-[#dcfb80] h-1.5 transition-all duration-150"
+                        style={{ width: `${(bulkProgress / PREDEFINED_PRO_USERS.length) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {bulkResults && (
+                  <div className="bg-zinc-950/80 rounded-lg p-3 border border-zinc-800/80 font-mono text-xs flex flex-wrap gap-x-6 gap-y-2 items-center">
+                    <span className="text-[#dcfb80] flex items-center gap-1.5">
+                      <CheckCircle size={14} /> Completed
+                    </span>
+                    <span className="text-zinc-400">
+                      Created: <strong className="text-zinc-100">{bulkResults.created}</strong>
+                    </span>
+                    <span className="text-zinc-400">
+                      Updated: <strong className="text-zinc-100">{bulkResults.updated}</strong>
+                    </span>
+                    <span className="text-zinc-400">
+                      Skipped: <strong className="text-zinc-100">{bulkResults.skipped}</strong>
+                    </span>
+                    {bulkResults.errors > 0 && (
+                      <span className="text-red-400">
+                        Errors: <strong>{bulkResults.errors}</strong>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           
           <div className="mb-6 flex justify-between items-center bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-sm">
             <div>

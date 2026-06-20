@@ -15,17 +15,17 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [verifiedKeys, setVerifiedKeys] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    const gk = localStorage.getItem('app_gemini_key') || '';
-    const fk = localStorage.getItem('app_fal_key') || '';
-    const ek = localStorage.getItem('app_elevenlabs_key') || '';
+    const gk = (localStorage.getItem('app_gemini_key') || '').trim();
+    const fk = (localStorage.getItem('app_fal_key') || '').trim();
+    const ek = (localStorage.getItem('app_elevenlabs_key') || '').trim();
     if (gk) setGeminiKey(gk);
     if (fk) setFalKey(fk);
     if (ek) setElevenlabsKey(ek);
 
     const verifiedInit: { [key: string]: boolean } = {};
-    if (gk && gk.startsWith('AIzaSy') && gk.length >= 20) verifiedInit.gemini = true;
-    if (fk && fk.startsWith('key-') && fk.length >= 20) verifiedInit.fal = true;
-    if (ek && ek.length >= 20) verifiedInit.elevenlabs = true;
+    if (gk && gk.length >= 10) verifiedInit.gemini = true;
+    if (fk && fk.length >= 10) verifiedInit.fal = true;
+    if (ek && ek.length >= 10) verifiedInit.elevenlabs = true;
     setVerifiedKeys(verifiedInit);
   }, []);
 
@@ -41,9 +41,18 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('app_gemini_key', geminiKey);
-    localStorage.setItem('app_fal_key', falKey);
-    localStorage.setItem('app_elevenlabs_key', elevenlabsKey);
+    const cleanGemini = geminiKey.trim();
+    const cleanFal = falKey.trim();
+    const cleanElevenlabs = elevenlabsKey.trim();
+
+    localStorage.setItem('app_gemini_key', cleanGemini);
+    localStorage.setItem('app_fal_key', cleanFal);
+    localStorage.setItem('app_elevenlabs_key', cleanElevenlabs);
+
+    setGeminiKey(cleanGemini);
+    setFalKey(cleanFal);
+    setElevenlabsKey(cleanElevenlabs);
+
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
@@ -52,7 +61,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     const isVerifying = verifyingKey[keyType];
     const isVerified = verifiedKeys[keyType];
 
-    if (!val) {
+    const trimmedVal = val.trim();
+
+    if (!trimmedVal) {
       return (
         <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-medium tracking-wide uppercase">
           Missing
@@ -69,14 +80,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       );
     }
 
-    let isValidFormat = false;
-    if (keyType === 'gemini') {
-      isValidFormat = val.startsWith('AIzaSy') && val.length >= 20;
-    } else if (keyType === 'fal') {
-      isValidFormat = val.startsWith('key-') && val.length >= 20;
-    } else if (keyType === 'elevenlabs') {
-      isValidFormat = val.length >= 20;
-    }
+    let isValidFormat = trimmedVal.length >= 10;
 
     if (isVerified && isValidFormat) {
       return (
