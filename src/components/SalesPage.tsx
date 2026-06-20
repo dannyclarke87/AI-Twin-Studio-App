@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { mockApps } from '../data';
 import { auth } from '../firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 interface SalesPageProps {
   onUpgrade: (tier: 'starter' | 'pro' | 'elite') => void;
@@ -164,11 +164,12 @@ export function SalesPage({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   // UI states
-  const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signup' | 'signin'; selectedTier?: 'starter' | 'pro' | 'elite' }>({
+  const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signup' | 'signin' | 'forgot-password'; selectedTier?: 'starter' | 'pro' | 'elite' }>({
     isOpen: false,
     mode: 'signup'
   });
   const [authError, setAuthError] = useState<string | null>(null);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
@@ -284,6 +285,34 @@ export function SalesPage({
         msg = 'This email already exists. Click "Sign In" below to log in instead.';
       } else if (err.code === 'auth/invalid-credential') {
         msg = 'Invalid email or password.';
+      }
+      setAuthError(msg);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handlePasswordResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authEmail) {
+      setAuthError('Please fill in your email address.');
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError(null);
+    setResetSuccessMessage(null);
+    try {
+      await sendPasswordResetEmail(auth, authEmail.trim());
+      setResetSuccessMessage('A password reset link has been successfully sent to your email address! Please check your inbox and your spam folder.');
+    } catch (err: any) {
+      console.error("Password reset error:", err);
+      let msg = err.message;
+      if (err.code === 'auth/user-not-found') {
+        msg = "We couldn't find an account matching that email address. Please check and try again.";
+      } else if (err.code === 'auth/invalid-email') {
+        msg = "Please enter a valid email address.";
+      } else {
+        msg = err.message;
       }
       setAuthError(msg);
     } finally {
@@ -1158,70 +1187,139 @@ export function SalesPage({
                 </div>
                 
                 <h3 className="text-xl font-black text-white">
-                  {authModal.mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
+                  {authModal.mode === 'signup' ? 'Create Your Account' : (authModal.mode === 'signin' ? 'Welcome Back' : 'Reset Password')}
                 </h3>
                 
                 <p className="text-xs text-zinc-400 mt-1 max-w-xs mx-auto">
-                  {authModal.selectedTier 
+                  {authModal.mode === 'forgot-password'
+                    ? 'Enter your email to receive a password reset link.'
+                    : (authModal.selectedTier 
                     ? `Set up your credentials to complete secure checkout for the ${authModal.selectedTier.charAt(0).toUpperCase() + authModal.selectedTier.slice(1)} Pack.` 
-                    : 'Access your integrated AI Twin Studio channels.'}
+                    : 'Access your integrated AI Twin Studio channels.')}
                 </p>
               </div>
 
               {authError && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/25 rounded-xl text-[11px] text-red-400 flex items-start gap-2">
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/25 rounded-xl text-[11px] text-red-400 flex items-start gap-2 text-left">
                   <Info size={14} className="flex-shrink-0 mt-0.5" />
                   <span>{authError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@example.com"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#dcfb80] transition-colors placeholder-zinc-600"
-                  />
+              {resetSuccessMessage && (
+                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl text-[11px] text-emerald-400 flex items-start gap-2 text-left">
+                  <CheckCircle size={14} className="flex-shrink-0 mt-0.5 text-emerald-400 animate-bounce" />
+                  <span>{resetSuccessMessage}</span>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#dcfb80] transition-colors"
-                  />
-                  {authModal.mode === 'signup' && (
-                    <span className="text-[10px] text-zinc-500 block mt-1">Must be at least 6 characters.</span>
-                  )}
-                </div>
+              {authModal.mode === 'forgot-password' ? (
+                <form onSubmit={handlePasswordResetSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                      Email address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@example.com"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#dcfb80] transition-colors placeholder-zinc-600"
+                    />
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={authLoading}
-                  className="w-full py-3 bg-[#dcfb80] hover:bg-opacity-95 text-zinc-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_4px_15px_rgba(220,251,128,0.15)] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {authLoading ? (
-                    <span>Creating Security Tunnel...</span>
-                  ) : (
-                    <>
-                      <span>{authModal.mode === 'signup' ? 'Continue with Checkout' : 'Secure Log In'}</span>
-                      <ArrowRight size={14} />
-                    </>
-                  )}
-                </button>
-              </form>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3 bg-[#dcfb80] hover:bg-opacity-95 text-zinc-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_4px_15px_rgba(220,251,128,0.15)] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {authLoading ? (
+                      <span>Sending Reset Link...</span>
+                    ) : (
+                      <>
+                        <span>Send Reset Link</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthError(null);
+                      setResetSuccessMessage(null);
+                      setAuthModal(prev => ({ ...prev, mode: 'signin' }));
+                    }}
+                    className="w-full text-center text-zinc-400 hover:text-white text-xs mt-2 transition-colors underline bg-transparent border-none cursor-pointer p-0"
+                  >
+                    Back to sign in
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                      Email address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@example.com"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#dcfb80] transition-colors placeholder-zinc-600"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        Password
+                      </label>
+                      {authModal.mode === 'signin' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthError(null);
+                            setResetSuccessMessage(null);
+                            setAuthModal(prev => ({ ...prev, mode: 'forgot-password' }));
+                          }}
+                          className="text-[#dcfb80] hover:underline text-[10px] font-bold focus:outline-none bg-transparent border-none cursor-pointer p-0"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#dcfb80] transition-colors"
+                    />
+                    {authModal.mode === 'signup' && (
+                      <span className="text-[10px] text-zinc-500 block mt-1">Must be at least 6 characters.</span>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3 bg-[#dcfb80] hover:bg-opacity-95 text-zinc-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_4px_15px_rgba(220,251,128,0.15)] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {authLoading ? (
+                      <span>Creating Security Tunnel...</span>
+                    ) : (
+                      <>
+                        <span>{authModal.mode === 'signup' ? 'Continue with Checkout' : 'Secure Log In'}</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
 
               <hr className="border-zinc-900 my-6" />
 
@@ -1230,20 +1328,30 @@ export function SalesPage({
                   <p className="text-zinc-500">
                     Already have an account?{' '}
                     <button 
-                      onClick={() => { setAuthError(null); setAuthModal(prev => ({ ...prev, mode: 'signin' })); }} 
+                      onClick={() => { setAuthError(null); setResetSuccessMessage(null); setAuthModal(prev => ({ ...prev, mode: 'signin' })); }} 
                       className="text-[#dcfb80] font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
                     >
                       Sign In
                     </button>
                   </p>
-                ) : (
+                ) : authModal.mode === 'signin' ? (
                   <p className="text-zinc-500">
                     Need an account?{' '}
                     <button 
-                      onClick={() => { setAuthError(null); setAuthModal(prev => ({ ...prev, mode: 'signup' })); }} 
+                      onClick={() => { setAuthError(null); setResetSuccessMessage(null); setAuthModal(prev => ({ ...prev, mode: 'signup' })); }} 
                       className="text-[#dcfb80] font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
                     >
                       Sign Up
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-zinc-500">
+                    Remember your password?{' '}
+                    <button 
+                      onClick={() => { setAuthError(null); setResetSuccessMessage(null); setAuthModal(prev => ({ ...prev, mode: 'signin' })); }} 
+                      className="text-[#dcfb80] font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
+                    >
+                      Sign In
                     </button>
                   </p>
                 )}
