@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Check,
   Users,
-  HelpCircle
+  HelpCircle,
+  Award
 } from 'lucide-react';
 
 interface DashboardScreenProps {
@@ -28,6 +29,7 @@ interface DashboardScreenProps {
   onGettingStarted?: () => void;
   userStatus: AuthState;
   onUpgrade: (tier: 'starter' | 'pro' | 'elite') => void;
+  isPreviewMode?: boolean;
 }
 
 const CATEGORIES: Category[] = ['All', 'Video', 'Images', 'LinkedIn', 'Memes', 'Voice', 'Text'];
@@ -39,7 +41,8 @@ export function DashboardScreen({
   onOpenAdmin, 
   onGettingStarted, 
   userStatus, 
-  onUpgrade 
+  onUpgrade,
+  isPreviewMode
 }: DashboardScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('All');
@@ -131,23 +134,45 @@ export function DashboardScreen({
 
         {/* Current Active Plan Widget */}
         <div className="mb-8 p-4 bg-zinc-950/80 border border-zinc-800 rounded-xl">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5 flex items-center gap-1">
-            <Crown size={12} className="text-yellow-400" />
-            Your Account Plan
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${activeLevelInfo.color}`}>
-              {activeLevelInfo.label}
-            </span>
-            {showGlobalUpgradeButton && (
-              <button
-                onClick={() => setIsUpgradeModalOpen(true)}
-                className="text-[11px] font-bold text-[#dcfb80] hover:underline flex items-center gap-0.5"
-              >
-                Upgrade <ChevronRight size={12} />
-              </button>
-            )}
-          </div>
+          {isPreviewMode ? (
+            <>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#dcfb80] mb-1.5 flex items-center gap-1 font-mono tracking-widest">
+                <Sparkles size={12} className="animate-pulse" />
+                Previewing
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold border text-purple-400 border-purple-500/20 bg-purple-500/10">
+                  Elite Pass
+                </span>
+                <button
+                  onClick={onLogout}
+                  className="text-[11px] font-bold text-zinc-400 hover:text-[#ff6b6b] hover:underline"
+                >
+                  Exit Demo
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5 flex items-center gap-1">
+                <Crown size={12} className="text-yellow-400" />
+                Your Account Plan
+              </div>
+              <div className="flex items-center justify-between">
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${activeLevelInfo.color}`}>
+                  {activeLevelInfo.label}
+                </span>
+                {showGlobalUpgradeButton && (
+                  <button
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    className="text-[11px] font-bold text-[#dcfb80] hover:underline flex items-center gap-0.5"
+                  >
+                    Upgrade <ChevronRight size={12} />
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
         
         <nav className="flex-1 space-y-1">
@@ -205,6 +230,19 @@ export function DashboardScreen({
           </a>
 
           <a
+            href="https://portal.hellofreedom.co/communities/groups/ai-twin-studio/private-group"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-between p-2.5 rounded-md text-sm font-medium text-zinc-400 hover:text-[#dcfb80] transition-colors"
+          >
+            <span className="flex items-center gap-3">
+              <Award size={18} className="text-[#dcfb80]" />
+              <span>Membership</span>
+            </span>
+            <ArrowUpRight size={14} className="opacity-60" />
+          </a>
+
+          <a
             href="mailto:support@aitwinstudio.co"
             className="w-full flex items-center gap-3 p-2.5 rounded-md text-sm font-medium text-zinc-400 hover:text-[#dcfb80] transition-colors"
           >
@@ -229,13 +267,27 @@ export function DashboardScreen({
             className="w-full flex items-center gap-3 p-2.5 rounded-md text-sm font-medium text-[#ff6b6b] hover:bg-zinc-800 transition-colors"
           >
             <LogOut size={18} />
-            <span>Log Out</span>
+            <span>{isPreviewMode ? 'Exit Demo Preview' : 'Log Out'}</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
+        {isPreviewMode && (
+          <div className="bg-gradient-to-r from-[#dcfb80]/15 to-emerald-500/15 border-b border-[#dcfb80]/20 px-6 py-2.5 flex items-center justify-between gap-4 flex-shrink-0 z-10 shadow-sm">
+            <div className="flex items-center gap-2 text-xs md:text-sm text-zinc-300">
+              <Sparkles size={16} className="text-[#dcfb80] shrink-0 animate-pulse" />
+              <span>You are viewing the dashboard in <strong className="text-white font-semibold">Elite Preview Mode</strong>—all 24+ specialized studio suites are unlocked for you.</span>
+            </div>
+            <button 
+              onClick={onLogout}
+              className="text-xs bg-[#dcfb80] hover:bg-[#c9eb6e] text-black font-extrabold px-3 py-1.5 rounded-md transition-colors whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Exit Preview
+            </button>
+          </div>
+        )}
         
         {/* Top Bar for Mobile */}
         <div className="px-6 py-4 border-b border-zinc-850 bg-zinc-950 flex items-center md:hidden flex-shrink-0 gap-3">

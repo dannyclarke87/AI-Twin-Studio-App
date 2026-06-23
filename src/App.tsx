@@ -32,6 +32,7 @@ export default function App() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewState, setViewState] = useState<'dashboard' | 'admin' | 'getting_started'>('getting_started');
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   useEffect(() => {
     // Initialize First Promoter Tracking if account ID is set in the environment
@@ -66,7 +67,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Clean up any existing snapshot listener first
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       if (firebaseUser && firebaseUser.email) {
         setCurrentUserEmail(firebaseUser.email);
         
@@ -180,20 +189,21 @@ export default function App() {
         }
 
         // Setup real-time listener for status changes
-        const unsubscribeSnapshot = onSnapshot(userRef, (docSnap) => {
+        unsubscribeSnapshot = onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data() as User;
                 setAuthState(data.status);
             }
         }, (error) => {
-            try {
-              handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
-            } catch (e) {
-              console.error("Firestore onSnapshot error handled:", e);
+            // Only log errors if the user is still signed in/auth has not been cleared
+            if (auth.currentUser) {
+              try {
+                handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+              } catch (e) {
+                console.error("Firestore onSnapshot error handled:", e);
+              }
             }
         });
-
-        return () => unsubscribeSnapshot();
       } else {
         setCurrentUserEmail(null);
         setAuthState('logged-out');
@@ -201,7 +211,12 @@ export default function App() {
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+      unsubscribeAuth();
+    };
   }, []);
 
   const handleLogin = (email: string) => {
@@ -245,11 +260,11 @@ export default function App() {
      return <div className="min-h-[100dvh] bg-zinc-950 flex items-center justify-center"><div className="text-zinc-500">Loading...</div></div>;
   }
 
-  const isUserPaid = ['paid', 'starter', 'pro', 'elite', 'legacy', 'admin'].includes(authState);
+  const isUserPaid = ['paid', 'starter', 'pro', 'elite', 'legacy', 'admin'].includes(authState) || isPreviewMode;
 
   return (
     <>
-      {(authState === 'logged-out' || authState === 'unpaid') && (
+      {(!isUserPaid) && (
         <SalesPage 
           onUpgrade={handleUpgrade} 
           onLogin={handleLogin} 
@@ -262,13 +277,14 @@ export default function App() {
       
       {isUserPaid && viewState === 'dashboard' && (
         <DashboardScreen 
-          onLogout={handleLogout} 
+          onLogout={isPreviewMode ? () => { setIsPreviewMode(false); setViewState('getting_started'); } : handleLogout} 
           onOpenSettings={() => setIsSettingsOpen(true)}
           isAdmin={authState === 'admin'}
           onOpenAdmin={() => setViewState('admin')}
           onGettingStarted={() => setViewState('getting_started')}
-          userStatus={authState}
+          userStatus={isPreviewMode ? 'elite' : authState}
           onUpgrade={handleUpgrade}
+          isPreviewMode={isPreviewMode}
         />
       )}
 

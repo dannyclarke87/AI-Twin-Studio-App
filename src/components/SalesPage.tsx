@@ -155,7 +155,7 @@ export function SalesPage({
   isLoggedIn, 
   currentUserEmail, 
   currentUserStatus,
-  onLogout 
+  onLogout
 }: SalesPageProps) {
   
   // App directory filtering state
